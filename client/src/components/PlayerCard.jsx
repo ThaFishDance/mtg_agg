@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import damageTakenImg from '../assets/damage_taken.png'
+import healthGainImg from '../assets/health_gain.png'
 
 const MANA_COLORS = {
   W: { color: '#f5f0dc', textColor: '#1a1a1a', label: 'W' },
@@ -20,14 +22,57 @@ function getLifeColor(lifePct) {
   return '#e05c3a'
 }
 
+function getEffectSize(count) {
+  if (count <= 3) return 84
+  if (count <= 6) return 68
+  if (count <= 10) return 54
+  if (count <= 20) return 42
+  return 34
+}
+
 export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonChange, onCommanderDamageChange, onToggleEliminated }) {
   const [editingLife, setEditingLife] = useState(false)
   const [lifeInput, setLifeInput] = useState('')
+  const [lifeEffects, setLifeEffects] = useState([])
+  const effectIdRef = useRef(0)
 
   const lifePct = Math.max(0, player.life / player.startingLife)
   const opponents = allPlayers.filter(p => p.id !== player.id)
   const glowColor = getGlowColor(player.colorIdentity)
   const lifeBarColor = getLifeColor(lifePct)
+
+  function triggerLifeEffects(delta) {
+    if (!delta) return
+
+    const count = Math.abs(delta)
+    const type = delta > 0 ? 'gain' : 'damage'
+    const image = delta > 0 ? healthGainImg : damageTakenImg
+    const baseSize = getEffectSize(count)
+    const nextEffects = Array.from({ length: count }, (_, index) => ({
+      id: `${type}-${effectIdRef.current++}`,
+      type,
+      image,
+      size: Math.max(24, baseSize - Math.floor(index / 8) * 4),
+      left: 10 + Math.random() * 78,
+      top: 14 + Math.random() * 58,
+      rotation: (Math.random() - 0.5) * 34,
+      delay: Math.random() * 0.24,
+      duration: 1.15 + Math.random() * 0.4,
+    }))
+
+    setLifeEffects(prev => [...prev, ...nextEffects])
+
+    window.setTimeout(() => {
+      setLifeEffects(prev => prev.filter(effect => !nextEffects.some(next => next.id === effect.id)))
+    }, 1800)
+  }
+
+  function submitLifeChange(newLife) {
+    const delta = newLife - player.life
+    if (!delta) return
+    triggerLifeEffects(delta)
+    onLifeChange(newLife)
+  }
 
   function handleLifeClick() {
     setLifeInput(String(player.life))
@@ -36,7 +81,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
 
   function handleLifeSubmit() {
     const val = parseInt(lifeInput, 10)
-    if (!isNaN(val)) onLifeChange(val)
+    if (!isNaN(val)) submitLifeChange(val)
     setEditingLife(false)
   }
 
@@ -51,7 +96,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
 
   return (
     <div
-      className="relative rounded-2xl p-4 flex flex-col gap-3 transition-all"
+      className="relative rounded-2xl p-4 flex flex-col gap-3 transition-all overflow-hidden"
       style={{
         backgroundColor: '#1c2230',
         border: `2px solid ${glowColor}44`,
@@ -59,9 +104,30 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
         opacity: player.eliminated ? 0.6 : 1,
       }}
     >
+      <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
+        {lifeEffects.map(effect => (
+          <img
+            key={effect.id}
+            src={effect.image}
+            alt=""
+            aria-hidden="true"
+            className={`life-effect-sprite life-effect-${effect.type}`}
+            style={{
+              left: `${effect.left}%`,
+              top: `${effect.top}%`,
+              width: `${effect.size}px`,
+              height: `${effect.size}px`,
+              '--effect-rotation': `${effect.rotation}deg`,
+              animationDelay: `${effect.delay}s`,
+              animationDuration: `${effect.duration}s`,
+            }}
+          />
+        ))}
+      </div>
+
       {/* Eliminated overlay */}
       {player.eliminated && (
-        <div className="absolute inset-0 rounded-2xl flex items-center justify-center z-10" style={{ backgroundColor: '#0d111788' }}>
+        <div className="absolute inset-0 rounded-2xl flex items-center justify-center z-30" style={{ backgroundColor: '#0d111788' }}>
           <div className="font-cinzel font-bold text-2xl tracking-widest" style={{ color: '#e05c3a', textShadow: '0 0 20px #e05c3a' }}>
             ELIMINATED
           </div>
@@ -69,7 +135,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between relative z-10">
         <div>
           <div className="font-semibold text-white text-base">{player.name}</div>
           {player.commanderName && (
@@ -91,10 +157,10 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
       </div>
 
       {/* Life total */}
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex items-center justify-center gap-3 relative z-10">
         <div className="flex flex-col gap-1">
-          <button onClick={() => onLifeChange(player.life + 5)} className="w-10 h-7 rounded text-xs font-semibold" style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}>+5</button>
-          <button onClick={() => onLifeChange(player.life + 1)} className="w-10 h-7 rounded text-xs font-semibold" style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}>+1</button>
+          <button onClick={() => submitLifeChange(player.life + 5)} className="w-10 h-7 rounded text-xs font-semibold" style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}>+5</button>
+          <button onClick={() => submitLifeChange(player.life + 1)} className="w-10 h-7 rounded text-xs font-semibold" style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}>+1</button>
         </div>
 
         <div className="text-center cursor-pointer select-none" onClick={handleLifeClick}>
@@ -118,13 +184,13 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
         </div>
 
         <div className="flex flex-col gap-1">
-          <button onClick={() => onLifeChange(player.life - 1)} className="w-10 h-7 rounded text-xs font-semibold" style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}>-1</button>
-          <button onClick={() => onLifeChange(player.life - 5)} className="w-10 h-7 rounded text-xs font-semibold" style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}>-5</button>
+          <button onClick={() => submitLifeChange(player.life - 1)} className="w-10 h-7 rounded text-xs font-semibold" style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}>-1</button>
+          <button onClick={() => submitLifeChange(player.life - 5)} className="w-10 h-7 rounded text-xs font-semibold" style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}>-5</button>
         </div>
       </div>
 
       {/* Health bar */}
-      <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#374151' }}>
+      <div className="w-full h-2 rounded-full overflow-hidden relative z-10" style={{ backgroundColor: '#374151' }}>
         <div
           className="h-full rounded-full transition-all duration-300"
           style={{ width: `${Math.max(0, Math.min(100, lifePct * 100))}%`, backgroundColor: lifeBarColor }}
@@ -132,7 +198,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
       </div>
 
       {/* Poison counters */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 relative z-10">
         <div className="flex gap-0.5 flex-wrap">
           {Array.from({ length: 10 }).map((_, idx) => (
             <div
@@ -161,7 +227,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
 
       {/* Commander damage matrix */}
       {opponents.length > 0 && (
-        <div>
+        <div className="relative z-10">
           <div className="text-xs text-gray-500 mb-1">Commander Damage Received</div>
           <div className="flex flex-col gap-1">
             {opponents.map(opp => {
@@ -200,7 +266,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
       {/* Eliminate button */}
       <button
         onClick={() => onToggleEliminated(!player.eliminated)}
-        className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all mt-auto"
+        className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all mt-auto relative z-10"
         style={player.eliminated
           ? { backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }
           : { backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }

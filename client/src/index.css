@@ -42,3 +42,53 @@
     background-color: #c94e2e;
   }
 }
+
+.life-effect-sprite {
+  position: absolute;
+  opacity: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.28));
+  will-change: transform, opacity;
+}
+
+.life-effect-damage {
+  animation-name: damageBurst;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.life-effect-gain {
+  animation-name: gainBurst;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+@keyframes damageBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -35%) scale(0.35) rotate(var(--effect-rotation, 0deg));
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08) rotate(var(--effect-rotation, 0deg));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -88%) scale(0.72) rotate(var(--effect-rotation, 0deg));
+  }
+}
+
+@keyframes gainBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -30%) scale(0.35) rotate(var(--effect-rotation, 0deg));
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.04) rotate(var(--effect-rotation, 0deg));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -102%) scale(0.78) rotate(var(--effect-rotation, 0deg));
+  }
+}
