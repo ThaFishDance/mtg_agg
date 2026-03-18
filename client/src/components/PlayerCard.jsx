@@ -14,7 +14,7 @@ const MANA_COLORS = {
 function getGlowColor(colorIdentity) {
   if (!colorIdentity || colorIdentity.length === 0) return '#c9a84c'
   if (colorIdentity.length === 1) return MANA_COLORS[colorIdentity[0]]?.color || '#c9a84c'
-  return '#c9a84c'
+  return '#c9a84c' // gold for multi-color
 }
 
 function getLifeColor(lifePct) {
@@ -127,6 +127,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
         ))}
       </div>
 
+      {/* Eliminated overlay */}
       {player.eliminated && (
         <div className="absolute inset-0 rounded-2xl flex items-center justify-center z-30" style={{ backgroundColor: '#0d111788' }}>
           <div className="font-cinzel font-bold text-2xl tracking-widest" style={{ color: '#e05c3a', textShadow: '0 0 20px #e05c3a' }}>
@@ -135,6 +136,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
         </div>
       )}
 
+      {/* Header */}
       <div className="flex items-start justify-between relative z-10">
         <div>
           <div className="font-semibold text-white text-base">{player.name}</div>
@@ -142,6 +144,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
             <div className="text-xs mt-0.5" style={{ color: '#c9a84c' }}>{player.commanderName}</div>
           )}
         </div>
+        {/* Color badges */}
         <div className="flex gap-1">
           {(player.colorIdentity || []).map(c => (
             <div
@@ -155,6 +158,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
         </div>
       </div>
 
+      {/* Life total */}
       <div className="flex items-center justify-center gap-3 relative z-10">
         <div className="flex flex-col gap-1">
           <button onClick={() => submitLifeChange(player.life + 5)} className="w-10 h-7 rounded text-xs font-semibold" style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}>+5</button>
@@ -187,6 +191,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
         </div>
       </div>
 
+      {/* Health bar */}
       <div className="w-full h-2 rounded-full overflow-hidden relative z-10" style={{ backgroundColor: '#374151' }}>
         <div
           className="h-full rounded-full transition-all duration-300"
@@ -194,6 +199,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
         />
       </div>
 
+      {/* Poison counters */}
       <div className="flex items-center gap-2 relative z-10">
         <div className="flex gap-0.5 flex-wrap">
           {Array.from({ length: 10 }).map((_, idx) => (
@@ -221,6 +227,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
         </div>
       </div>
 
+      {/* Commander damage matrix */}
       {opponents.length > 0 && (
         <div className="relative z-10">
           <div className="text-xs text-gray-500 mb-1">Commander Damage Received</div>
@@ -258,6 +265,7 @@ export default function PlayerCard({ player, allPlayers, onLifeChange, onPoisonC
         </div>
       )}
 
+      {/* Eliminate button */}
       <button
         onClick={() => onToggleEliminated(!player.eliminated)}
         className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all mt-auto relative z-10"
