@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import PlayerCard from './PlayerCard'
+import CardFlashOverlay from './CardFlashOverlay'
+import useVoiceCardRecognition from '../hooks/useVoiceCardRecognition'
 
 function formatTime(ms) {
   const s = Math.floor(ms / 1000)
@@ -15,6 +17,16 @@ export default function Dashboard({ players, setPlayers, gameId, gameStartTime, 
   const [showEndModal, setShowEndModal] = useState(false)
   const [selectedWinner, setSelectedWinner] = useState('')
   const [ending, setEnding] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
+
+  const {
+    isSupported: voiceSupported,
+    isListening,
+    error: voiceError,
+    lastTranscript,
+    activeFlash,
+    lastMatchedName,
+  } = useVoiceCardRecognition({ enabled: voiceEnabled })
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -72,35 +84,77 @@ export default function Dashboard({ players, setPlayers, gameId, gameStartTime, 
 
   const activePlayers = players.filter(p => !p.eliminated)
   const cols = players.length <= 2 ? 2 : players.length <= 4 ? 2 : 3
+  const voiceStatus = !voiceSupported
+    ? 'Voice unavailable in this browser'
+    : voiceError || (voiceEnabled ? (isListening ? 'Listening for “I cast …” or “activate …”' : 'Starting mic…') : 'Voice off')
 
   return (
     <div>
+      <CardFlashOverlay flash={activeFlash} />
+
       {/* Sticky top bar */}
-      <div className="sticky top-[57px] z-40 rounded-xl px-4 py-3 mb-6 flex items-center justify-between" style={{ backgroundColor: '#161b22', border: '1px solid #c9a84c33' }}>
-        <div className="flex items-center gap-6">
-          <div className="text-center">
-            <div className="text-xs text-gray-400">Time</div>
-            <div className="font-cinzel font-semibold text-lg" style={{ color: '#c9a84c' }}>{formatTime(elapsed)}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-xs text-gray-400">Turn</div>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setTurn(t => Math.max(1, t - 1))} className="text-gray-400 hover:text-white px-1">−</button>
-              <span className="font-cinzel font-semibold text-lg" style={{ color: '#c9a84c' }}>{turn}</span>
-              <button onClick={() => setTurn(t => t + 1)} className="text-gray-400 hover:text-white px-1">+</button>
+      <div className="sticky top-[57px] z-40 rounded-xl px-4 py-3 mb-6" style={{ backgroundColor: '#161b22', border: '1px solid #c9a84c33' }}>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-6 flex-wrap">
+            <div className="text-center">
+              <div className="text-xs text-gray-400">Time</div>
+              <div className="font-cinzel font-semibold text-lg" style={{ color: '#c9a84c' }}>{formatTime(elapsed)}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-gray-400">Turn</div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setTurn(t => Math.max(1, t - 1))} className="text-gray-400 hover:text-white px-1">−</button>
+                <span className="font-cinzel font-semibold text-lg" style={{ color: '#c9a84c' }}>{turn}</span>
+                <button onClick={() => setTurn(t => t + 1)} className="text-gray-400 hover:text-white px-1">+</button>
+              </div>
+            </div>
+            <div className="text-xs text-gray-400">
+              {activePlayers.length}/{players.length} active
             </div>
           </div>
-          <div className="text-xs text-gray-400">
-            {activePlayers.length}/{players.length} active
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => voiceSupported && setVoiceEnabled(current => !current)}
+              disabled={!voiceSupported}
+              className="px-4 py-2 rounded-lg font-semibold text-sm transition-all"
+              style={voiceEnabled
+                ? { backgroundColor: '#3a9e5c', color: '#07110a' }
+                : !voiceSupported
+                  ? { backgroundColor: '#374151', color: '#6b7280', cursor: 'not-allowed' }
+                  : { backgroundColor: '#1f2937', color: '#c9a84c', border: '1px solid #c9a84c55' }
+              }
+            >
+              {voiceEnabled ? 'Voice On' : 'Voice Off'}
+            </button>
+            <button
+              onClick={() => setShowEndModal(true)}
+              className="px-4 py-2 rounded-lg font-semibold text-sm transition-all"
+              style={{ backgroundColor: '#e05c3a', color: 'white' }}
+            >
+              End Game
+            </button>
           </div>
         </div>
-        <button
-          onClick={() => setShowEndModal(true)}
-          className="px-4 py-2 rounded-lg font-semibold text-sm transition-all"
-          style={{ backgroundColor: '#e05c3a', color: 'white' }}
-        >
-          End Game
-        </button>
+
+        <div className="mt-3 flex flex-col gap-1">
+          <div className="text-xs" style={{ color: voiceEnabled && isListening ? '#86efac' : '#9ca3af' }}>
+            {voiceStatus}
+          </div>
+          <div className="text-xs" style={{ color: '#6b7280' }}>
+            Try: “I cast Sol Ring” or “I pay 1 and activate Sensei's Divining Top”
+          </div>
+          {lastTranscript && (
+            <div className="text-xs truncate" style={{ color: '#6b7280' }}>
+              Last heard: “{lastTranscript}”
+            </div>
+          )}
+          {lastMatchedName && (
+            <div className="text-xs truncate" style={{ color: '#c9a84c' }}>
+              Last matched card: {lastMatchedName}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Player grid */}
