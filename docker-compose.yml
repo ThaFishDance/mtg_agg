@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: mtg_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./server/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - mtg_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mtg_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mtg_db_data:
