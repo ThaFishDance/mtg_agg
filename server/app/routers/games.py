@@ -72,6 +72,50 @@ async def list_games(session: AsyncSession = Depends(get_session)):
     return [_serialize(dict(row)) for row in rows]
 
 
+@router.get("/stats/colors")
+async def color_stats(session: AsyncSession = Depends(get_session)):
+    result = await session.execute(
+        text(
+            """
+            SELECT
+                color,
+                COUNT(*) FILTER (WHERE is_winner) AS wins,
+                COUNT(*)                           AS appearances
+            FROM (
+                SELECT
+                    UNNEST(gp.commander_colors)          AS color,
+                    gp.player_name = g.winner_name       AS is_winner
+                FROM game_players gp
+                JOIN games g ON g.id = gp.game_id
+                WHERE g.completed_at IS NOT NULL
+                  AND g.winner_name IS NOT NULL
+                  AND gp.commander_colors IS NOT NULL
+                  AND array_length(gp.commander_colors, 1) > 0
+            ) sub
+            GROUP BY color
+            ORDER BY wins DESC, appearances DESC
+            """
+        )
+    )
+    rows = result.mappings().all()
+
+    total_result = await session.execute(
+        text("SELECT COUNT(*) FROM games WHERE completed_at IS NOT NULL")
+    )
+    total_games = total_result.scalar_one()
+
+    colors = [
+        {
+            "color": row["color"],
+            "wins": row["wins"],
+            "appearances": row["appearances"],
+            "winRate": round(row["wins"] / row["appearances"] * 100, 1) if row["appearances"] else 0,
+        }
+        for row in rows
+    ]
+    return {"totalGames": total_games, "colors": colors}
+
+
 @router.get("/{game_id}")
 async def get_game(game_id: int, session: AsyncSession = Depends(get_session)):
     game_result = await session.execute(

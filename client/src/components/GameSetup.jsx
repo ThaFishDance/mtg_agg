@@ -49,6 +49,16 @@ export default function GameSetup({ onGameStart }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    const missingCommander = players.map((p, i) => !p.commanderName?.trim() ? i + 1 : null).filter(Boolean)
+    if (missingCommander.length > 0) {
+      setError(`Player${missingCommander.length > 1 ? 's' : ''} ${missingCommander.join(', ')} must enter a commander name`)
+      return
+    }
+    const missing = players.map((p, i) => p.colorIdentity.length === 0 ? i + 1 : null).filter(Boolean)
+    if (missing.length > 0) {
+      setError(`Player${missing.length > 1 ? 's' : ''} ${missing.join(', ')} must select at least one color`)
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -158,19 +168,22 @@ export default function GameSetup({ onGameStart }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Commander Name</label>
+                  <label className="block text-xs mb-1" style={{ color: !player.commanderName?.trim() ? '#e05c3a' : '#9ca3af' }}>
+                    Commander Name <span style={{ color: '#e05c3a' }}>*</span>
+                  </label>
                   <input
                     type="text"
                     value={player.commanderName}
                     onChange={e => updatePlayer(i, 'commanderName', e.target.value)}
-                    placeholder="Optional"
                     className="w-full rounded-lg px-3 py-2 text-sm"
-                    style={{ backgroundColor: '#161b22', border: '1px solid #374151', color: 'white' }}
+                    style={{ backgroundColor: '#161b22', border: `1px solid ${!player.commanderName?.trim() ? '#e05c3a55' : '#374151'}`, color: 'white' }}
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-gray-400 mb-2">Color Identity</label>
+                <label className="block text-xs mb-2" style={{ color: player.colorIdentity.length === 0 ? '#e05c3a' : '#9ca3af' }}>
+                  Color Identity <span style={{ color: '#e05c3a' }}>*</span>
+                </label>
                 <div className="flex gap-2">
                   {MANA_COLORS.map(c => (
                     <button

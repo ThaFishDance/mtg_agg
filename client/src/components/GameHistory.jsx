@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import ColorStats from './ColorStats'
 
 function formatDuration(seconds) {
   if (!seconds) return '—'
@@ -70,6 +71,8 @@ export default function GameHistory({ onNewGame }) {
         <h2 className="font-cinzel text-3xl font-bold mb-2" style={{ color: '#c9a84c' }}>Game History</h2>
         <p className="text-gray-400">Past battles and their outcomes</p>
       </div>
+
+      <ColorStats />
 
       {games.length === 0 ? (
         <div className="text-center py-20 rounded-2xl" style={{ backgroundColor: '#1c2230' }}>
