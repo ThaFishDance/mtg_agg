@@ -6,6 +6,20 @@ from ..schemas import CardLookupResponse
 router = APIRouter()
 
 
+@router.get("/autocomplete")
+async def autocomplete_card(
+    request: Request,
+    query: str = Query(..., description="Partial card name"),
+):
+    query = query.strip()
+    if not query:
+        return []
+    try:
+        return await request.app.state.scryfall.autocomplete(query)
+    except Exception:
+        return []
+
+
 @router.get("/lookup", response_model=CardLookupResponse)
 async def lookup_card(
     request: Request,

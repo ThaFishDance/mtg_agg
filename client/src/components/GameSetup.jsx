@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import CommanderInput from './CommanderInput'
 
 const MANA_COLORS = [
   { id: 'W', label: 'W', color: '#f5f0dc', textColor: '#1a1a1a' },
@@ -37,14 +38,8 @@ export default function GameSetup({ onGameStart }) {
     setPlayers(prev => prev.map((p, i) => i === index ? { ...p, [field]: value } : p))
   }
 
-  function toggleColor(playerIndex, colorId) {
-    setPlayers(prev => prev.map((p, i) => {
-      if (i !== playerIndex) return p
-      const colors = p.colorIdentity.includes(colorId)
-        ? p.colorIdentity.filter(c => c !== colorId)
-        : [...p.colorIdentity, colorId]
-      return { ...p, colorIdentity: colors }
-    }))
+  function handleCommanderSelect(playerIndex, { name, colorIdentity }) {
+    setPlayers(prev => prev.map((p, i) => i === playerIndex ? { ...p, commanderName: name, colorIdentity } : p))
   }
 
   async function handleSubmit(e) {
@@ -52,11 +47,6 @@ export default function GameSetup({ onGameStart }) {
     const missingCommander = players.map((p, i) => !p.commanderName?.trim() ? i + 1 : null).filter(Boolean)
     if (missingCommander.length > 0) {
       setError(`Player${missingCommander.length > 1 ? 's' : ''} ${missingCommander.join(', ')} must enter a commander name`)
-      return
-    }
-    const missing = players.map((p, i) => p.colorIdentity.length === 0 ? i + 1 : null).filter(Boolean)
-    if (missing.length > 0) {
-      setError(`Player${missing.length > 1 ? 's' : ''} ${missing.join(', ')} must select at least one color`)
       return
     }
     setLoading(true)
@@ -167,42 +157,30 @@ export default function GameSetup({ onGameStart }) {
                     style={{ backgroundColor: '#161b22', border: '1px solid #374151', color: 'white' }}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: !player.commanderName?.trim() ? '#e05c3a' : '#9ca3af' }}>
-                    Commander Name <span style={{ color: '#e05c3a' }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={player.commanderName}
-                    onChange={e => updatePlayer(i, 'commanderName', e.target.value)}
-                    className="w-full rounded-lg px-3 py-2 text-sm"
-                    style={{ backgroundColor: '#161b22', border: `1px solid ${!player.commanderName?.trim() ? '#e05c3a55' : '#374151'}`, color: 'white' }}
-                  />
-                </div>
+                <CommanderInput
+                  value={player.commanderName}
+                  onSelect={val => handleCommanderSelect(i, val)}
+                />
               </div>
-              <div>
-                <label className="block text-xs mb-2" style={{ color: player.colorIdentity.length === 0 ? '#e05c3a' : '#9ca3af' }}>
-                  Color Identity <span style={{ color: '#e05c3a' }}>*</span>
-                </label>
-                <div className="flex gap-2">
-                  {MANA_COLORS.map(c => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => toggleColor(i, c.id)}
-                      className="w-8 h-8 rounded-full text-xs font-bold transition-all"
-                      style={{
-                        backgroundColor: player.colorIdentity.includes(c.id) ? c.color : '#374151',
-                        color: player.colorIdentity.includes(c.id) ? c.textColor : '#9ca3af',
-                        transform: player.colorIdentity.includes(c.id) ? 'scale(1.15)' : 'scale(1)',
-                        boxShadow: player.colorIdentity.includes(c.id) ? `0 0 8px ${c.color}88` : 'none',
-                      }}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
+              {player.colorIdentity.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs" style={{ color: '#9ca3af' }}>Colors:</span>
+                  <div className="flex gap-1.5">
+                    {player.colorIdentity.map(c => {
+                      const mc = MANA_COLORS.find(m => m.id === c)
+                      return mc ? (
+                        <div
+                          key={c}
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-cinzel"
+                          style={{ backgroundColor: mc.color, color: mc.textColor, boxShadow: `0 0 6px ${mc.color}88` }}
+                        >
+                          {c}
+                        </div>
+                      ) : null
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ))}
         </div>

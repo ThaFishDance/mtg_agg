@@ -30,6 +30,15 @@ class ScryfallService:
                 return face_uris["large"]
         return None
 
+    async def autocomplete(self, query: str) -> list[str]:
+        """Returns up to 20 card name suggestions from Scryfall autocomplete."""
+        response = await self.client.get(
+            "https://api.scryfall.com/cards/autocomplete",
+            params={"q": query},
+        )
+        response.raise_for_status()
+        return response.json().get("data", [])
+
     async def lookup(self, query: str) -> dict:
         """
         Returns card dict on success.
@@ -50,4 +59,5 @@ class ScryfallService:
             "name": card["name"],
             "typeLine": card["type_line"],
             "imageUrl": image_url,
+            "colorIdentity": card.get("color_identity", []),
         }

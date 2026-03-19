@@ -51,3 +51,4 @@ class CardLookupResponse(BaseModel):
     name: str
     typeLine: str
     imageUrl: str
+    colorIdentity: list[str] = []
