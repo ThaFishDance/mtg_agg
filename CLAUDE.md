@@ -46,12 +46,15 @@ This is a full-stack MTG Commander game tracker with a React frontend, FastAPI b
 
 ### Frontend (`client/src/`)
 
-`App.jsx` is a view-state machine with three states: `setup` → `dashboard` → `history`. It owns top-level state (`gameId`, `players` array, `gameStartTime`) and passes it down as props.
+`App.jsx` is a view-state machine with four states: `landing` → `setup` → `dashboard` → `history`. It owns top-level state (`gameId`, `players` array, `gameStartTime`) and passes it down as props.
 
-- **GameSetup** — Creates a new game: collects player count, starting life, per-player name/commander/color identity, then POST `/api/games` to get `gameId` and player IDs
+- **LandingPage** — Marketing/welcome screen with hero, feature highlights, and CTAs linking to setup and history
+- **GameSetup** — Creates a new game: collects player count, starting life, per-player name and commander. Commander name is required; color identity is auto-populated from Scryfall when a commander is selected. POST `/api/games` to get `gameId` and player IDs
+- **CommanderInput** — Autocomplete input for commander names; debounces 300ms, fetches suggestions from `/api/cards/autocomplete`, then resolves color identity via `/api/cards/lookup` on selection
 - **Dashboard** — Active game UI: elapsed timer (1s interval), turn counter, PlayerCard grid, end-game modal that POSTs to `/api/games/:id/complete`
 - **PlayerCard** — Manages one player's local state (life, poison, commander damage per opponent, eliminated status); glow color driven by commander color identity
-- **GameHistory** — Table of completed games; expands rows via GET `/api/games/:id` (lazy-loaded on click)
+- **GameHistory** — Color win rate stats panel (`ColorStats`) above a table of completed games; rows expand via GET `/api/games/:id` (lazy-loaded on click)
+- **ColorStats** — Fetches `/api/games/stats/colors` and renders a win rate bar chart per mana color (W/U/B/R/G)
 
 ### Backend (`server/`)
 
@@ -66,10 +69,10 @@ server/
 │   ├── models.py        # SQLAlchemy ORM models (mirrors schema.sql)
 │   ├── schemas.py       # Pydantic request/response models (camelCase)
 │   ├── routers/
-│   │   ├── games.py     # 5 game endpoints
-│   │   └── cards.py     # Scryfall proxy endpoint
+│   │   ├── games.py     # 6 game endpoints (includes /stats/colors)
+│   │   └── cards.py     # Scryfall proxy endpoints (lookup + autocomplete)
 │   ├── services/
-│   │   └── scryfall.py  # httpx AsyncClient wrapper
+│   │   └── scryfall.py  # httpx AsyncClient wrapper (lookup, autocomplete)
 │   └── auth/
 │       ├── dependencies.py  # get_current_user (returns None until activated)
 │       └── jwt.py           # create_token / decode_token stubs
@@ -81,10 +84,14 @@ server/
 API endpoints:
 - `POST /api/games` — create game + players
 - `GET /api/games` — list completed games
+- `GET /api/games/stats/colors` — win rate per mana color (W/U/B/R/G)
 - `GET /api/games/{id}` — full game details
 - `POST /api/games/{id}/complete` — finalize with winner/results
-- `GET /api/cards/lookup?query=<name>` — Scryfall card image proxy
+- `GET /api/cards/autocomplete?query=<name>` — Scryfall name suggestions (up to 8)
+- `GET /api/cards/lookup?query=<name>` — Scryfall card image + color identity
 - `GET /api/health` — health check
+
+**Important:** `/api/games/stats/colors` must remain defined before `/{id}` in `games.py` to avoid routing ambiguity.
 
 ### Database
 
