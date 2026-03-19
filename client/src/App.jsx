@@ -2,9 +2,10 @@ import { useState } from 'react'
 import GameSetup from './components/GameSetup'
 import Dashboard from './components/Dashboard'
 import GameHistory from './components/GameHistory'
+import LandingPage from './components/LandingPage'
 
 export default function App() {
-  const [view, setView] = useState('setup') // 'setup' | 'dashboard' | 'history'
+  const [view, setView] = useState('landing') // 'landing' | 'setup' | 'dashboard' | 'history'
   const [players, setPlayers] = useState([])
   const [gameId, setGameId] = useState(null)
   const [gameStartTime, setGameStartTime] = useState(null)
@@ -37,6 +38,13 @@ export default function App() {
           </h1>
           <nav className="flex gap-2">
             <button
+              onClick={() => setView('landing')}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition-all ${view === 'landing' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+              style={view === 'landing' ? { backgroundColor: '#c9a84c', color: '#0d1117' } : {}}
+            >
+              Home
+            </button>
+            <button
               onClick={handleNewGame}
               className={`px-3 py-1.5 rounded text-sm font-medium transition-all ${view === 'setup' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
               style={view === 'setup' ? { backgroundColor: '#c9a84c', color: '#0d1117' } : {}}
@@ -64,7 +72,13 @@ export default function App() {
       </header>
 
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className={view === 'landing' ? '' : 'max-w-7xl mx-auto px-4 py-6'}>
+        {view === 'landing' && (
+          <LandingPage
+            onStartGame={handleNewGame}
+            onViewHistory={() => setView('history')}
+          />
+        )}
         {view === 'setup' && (
           <GameSetup onGameStart={handleGameStart} />
         )}
