@@ -6,14 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Start Development
 
-**Database (required first):**
+**Full stack via Docker Compose (recommended):**
 ```bash
-docker-compose up -d   # starts PostgreSQL on port 5432, auto-loads schema.sql
+docker-compose up -d   # starts PostgreSQL (port 5432) + FastAPI backend (port 3001)
 ```
 
-**Backend (port 3001):**
+**Backend only (port 3001):**
 ```bash
-cd server && npm install && npm run dev   # nodemon with hot-reload
+cd server
+python -m venv .venv # If you dont already have an existing venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --port 3001 --reload
 ```
 
 **Frontend (port 5173):**
@@ -24,16 +28,21 @@ cd client && npm install && npm run dev   # Vite dev server
 **Production build:**
 ```bash
 cd client && npm run build   # outputs to client/dist/
-cd server && npm start       # node index.js (no hot-reload)
+uvicorn app.main:app --host 0.0.0.0 --port 3001   # no --reload
+```
+
+**API docs (auto-generated):**
+```
+http://localhost:3001/docs
 ```
 
 No test or lint commands are configured in this project.
 
 ## Architecture
 
-This is a full-stack MTG Commander game tracker with a React frontend, Express backend, and PostgreSQL database.
+This is a full-stack MTG Commander game tracker with a React frontend, FastAPI backend, and PostgreSQL database.
 
-**Request flow:** Browser → Vite dev server → `/api/*` proxied to Express (port 3001) → PostgreSQL
+**Request flow:** Browser → Vite dev server → `/api/*` proxied to FastAPI (port 3001) → PostgreSQL
 
 ### Frontend (`client/src/`)
 
@@ -46,13 +55,35 @@ This is a full-stack MTG Commander game tracker with a React frontend, Express b
 
 ### Backend (`server/`)
 
-Single router at `server/routes/games.js` mounted under `/api/games`. Uses `pg` Pool (configured via env vars in `server/db.js`). Game creation and completion both run as transactions.
+FastAPI application in `server/app/`. Uses SQLAlchemy async with raw `text()` queries and asyncpg. Transactions use `async with session.begin()`.
+
+```
+server/
+├── app/
+│   ├── main.py          # FastAPI app, CORS, router mounts, lifespan (httpx client)
+│   ├── config.py        # pydantic-settings reading DB_* env vars
+│   ├── database.py      # async engine, session factory
+│   ├── models.py        # SQLAlchemy ORM models (mirrors schema.sql)
+│   ├── schemas.py       # Pydantic request/response models (camelCase)
+│   ├── routers/
+│   │   ├── games.py     # 5 game endpoints
+│   │   └── cards.py     # Scryfall proxy endpoint
+│   ├── services/
+│   │   └── scryfall.py  # httpx AsyncClient wrapper
+│   └── auth/
+│       ├── dependencies.py  # get_current_user (returns None until activated)
+│       └── jwt.py           # create_token / decode_token stubs
+├── schema.sql
+├── requirements.txt
+└── Dockerfile
+```
 
 API endpoints:
 - `POST /api/games` — create game + players
 - `GET /api/games` — list completed games
-- `GET /api/games/:id` — full game details
-- `POST /api/games/:id/complete` — finalize with winner/results
+- `GET /api/games/{id}` — full game details
+- `POST /api/games/{id}/complete` — finalize with winner/results
+- `GET /api/cards/lookup?query=<name>` — Scryfall card image proxy
 - `GET /api/health` — health check
 
 ### Database
