@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import API_BASE from '../api'
 import ColorStats from './ColorStats'
 
 function formatDuration(seconds) {
@@ -26,7 +27,7 @@ export default function GameHistory({ onNewGame }) {
   const [details, setDetails] = useState({})
 
   useEffect(() => {
-    fetch('/api/games')
+    fetch(`${API_BASE}/api/games`)
       .then(r => r.json())
       .then(data => { setGames(data); setLoading(false) })
       .catch(err => { setError(err.message); setLoading(false) })
@@ -40,7 +41,7 @@ export default function GameHistory({ onNewGame }) {
     setExpandedId(gameId)
     if (!details[gameId]) {
       try {
-        const res = await fetch(`/api/games/${gameId}`)
+        const res = await fetch(`${API_BASE}/api/games/${gameId}`)
         const data = await res.json()
         setDetails(prev => ({ ...prev, [gameId]: data }))
       } catch (err) {

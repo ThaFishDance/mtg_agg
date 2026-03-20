@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import API_BASE from '../api'
 
 export default function CommanderInput({ value, onSelect }) {
   const [suggestions, setSuggestions] = useState([])
@@ -16,7 +17,7 @@ export default function CommanderInput({ value, onSelect }) {
     }
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/cards/autocomplete?query=${encodeURIComponent(value)}`)
+        const res = await fetch(`${API_BASE}/api/cards/autocomplete?query=${encodeURIComponent(value)}`)
         const names = await res.json()
         setSuggestions(names.slice(0, 8))
         setHighlighted(0)
@@ -45,7 +46,7 @@ export default function CommanderInput({ value, onSelect }) {
     setOpen(false)
     setSuggestions([])
     try {
-      const res = await fetch(`/api/cards/lookup?query=${encodeURIComponent(name)}`)
+      const res = await fetch(`${API_BASE}/api/cards/lookup?query=${encodeURIComponent(name)}`)
       if (res.ok) {
         const card = await res.json()
         onSelect({ name: card.name, colorIdentity: card.colorIdentity ?? [] })

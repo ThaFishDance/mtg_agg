@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import API_BASE from '../api'
 import PlayerCard from './PlayerCard'
 import CardFlashOverlay from './CardFlashOverlay'
 import useVoiceCardRecognition from '../hooks/useVoiceCardRecognition'
@@ -69,7 +70,7 @@ export default function Dashboard({ players, setPlayers, gameId, gameStartTime, 
         eliminated: p.eliminated,
         commanderDamageDealt: Object.values(p.commanderDamage || {}).reduce((a, b) => a + b, 0),
       }))
-      await fetch(`/api/games/${gameId}/complete`, {
+      await fetch(`${API_BASE}/api/games/${gameId}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ winnerName: selectedWinner, players: finalPlayers }),

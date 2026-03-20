@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import API_BASE from '../api'
 import CommanderInput from './CommanderInput'
 
 const MANA_COLORS = [
@@ -52,7 +53,7 @@ export default function GameSetup({ onGameStart }) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/games', {
+      const res = await fetch(`${API_BASE}/api/games`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ players, startingLife }),

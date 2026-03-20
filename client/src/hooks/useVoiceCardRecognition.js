@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import API_BASE from '../api'
 
 const LOOKUP_COOLDOWN_MS = 2500
 const DISPLAY_MS = 3000
@@ -69,7 +70,7 @@ export default function useVoiceCardRecognition({ enabled }) {
       lastLookupRef.current = { name: normalizedCandidate, at: now }
 
       try {
-        const response = await fetch(`/api/cards/lookup?query=${encodeURIComponent(candidate)}`)
+        const response = await fetch(`${API_BASE}/api/cards/lookup?query=${encodeURIComponent(candidate)}`)
         if (!response.ok) return
         const card = await response.json()
         if (!card?.imageUrl) return

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import API_BASE from '../api'
 
 const MANA_COLORS = {
   W: { hex: '#f5f0dc', name: 'White' },
@@ -16,7 +17,7 @@ export default function ColorStats() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/games/stats/colors')
+    fetch(`${API_BASE}/api/games/stats/colors`)
       .then(r => r.json())
       .then(data => { setStats(data); setLoading(false) })
       .catch(() => setLoading(false))
