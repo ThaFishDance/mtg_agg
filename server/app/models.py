@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, Text, Boolean, ForeignKey
-from sqlalchemy.dialects.postgresql import TIMESTAMPTZ, ARRAY
+from sqlalchemy import Column, Integer, Text, Boolean, ForeignKey, TIMESTAMP
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .database import Base
@@ -9,12 +10,14 @@ class Game(Base):
     __tablename__ = "games"
 
     id = Column(Integer, primary_key=True)
-    started_at = Column(TIMESTAMPTZ, server_default=func.now(), nullable=False)
-    completed_at = Column(TIMESTAMPTZ)
+    started_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
+    completed_at = Column(TIMESTAMP(timezone=True))
     duration_seconds = Column(Integer)
     starting_life = Column(Integer, nullable=False, default=40)
     winner_name = Column(Text)
     player_count = Column(Integer, nullable=False)
+
+    players = relationship("GamePlayer", back_populates="game", order_by="GamePlayer.id")
 
 
 class GamePlayer(Base):
@@ -30,6 +33,8 @@ class GamePlayer(Base):
     eliminated = Column(Boolean, default=False)
     commander_damage_dealt = Column(Integer, default=0)
 
+    game = relationship("Game", back_populates="players")
+
 
 class GameEvent(Base):
     __tablename__ = "game_events"
@@ -39,4 +44,4 @@ class GameEvent(Base):
     player_id = Column(Integer, ForeignKey("game_players.id", ondelete="SET NULL"))
     event_type = Column(Text, nullable=False)
     amount = Column(Integer)
-    created_at = Column(TIMESTAMPTZ, server_default=func.now(), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)

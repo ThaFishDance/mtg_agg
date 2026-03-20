@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import text
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ..database import get_session
+from ..models import Game, GamePlayer
 from ..schemas import (
     CreateGameRequest,
     CreateGameResponse,
@@ -24,92 +26,82 @@ async def create_game(
         raise HTTPException(status_code=400, detail="At least 2 players required")
 
     async with session.begin():
-        result = await session.execute(
-            text(
-                "INSERT INTO games (starting_life, player_count) "
-                "VALUES (:life, :count) RETURNING id"
-            ),
-            {"life": body.startingLife, "count": len(body.players)},
-        )
-        game_id = result.scalar_one()
+        game = Game(starting_life=body.startingLife, player_count=len(body.players))
+        session.add(game)
+        await session.flush()
 
-        inserted_players = []
+        player_objects = []
         for player in body.players:
-            pr = await session.execute(
-                text(
-                    "INSERT INTO game_players "
-                    "(game_id, player_name, commander_name, commander_colors) "
-                    "VALUES (:gid, :name, :cmd, :colors) RETURNING id"
-                ),
-                {
-                    "gid": game_id,
-                    "name": player.name,
-                    "cmd": player.commanderName,
-                    "colors": player.colorIdentity,
-                },
+            gp = GamePlayer(
+                game_id=game.id,
+                player_name=player.name,
+                commander_name=player.commanderName,
+                commander_colors=player.colorIdentity,
             )
-            inserted_players.append({"id": pr.scalar_one(), "name": player.name})
+            session.add(gp)
+            player_objects.append(gp)
 
-    return {"gameId": game_id, "players": inserted_players}
+        await session.flush()
+
+    return {"gameId": game.id, "players": [{"id": p.id, "name": p.player_name} for p in player_objects]}
 
 
 @router.get("/")
 async def list_games(session: AsyncSession = Depends(get_session)):
     result = await session.execute(
-        text(
-            """
-            SELECT g.*,
-                   json_agg(json_build_object('player_name', gp.player_name) ORDER BY gp.id) AS players
-            FROM games g
-            LEFT JOIN game_players gp ON gp.game_id = g.id
-            WHERE g.completed_at IS NOT NULL
-            GROUP BY g.id
-            ORDER BY g.started_at DESC
-            """
-        )
+        select(Game)
+        .where(Game.completed_at.is_not(None))
+        .order_by(Game.started_at.desc())
+        .options(selectinload(Game.players))
     )
-    rows = result.mappings().all()
-    return [_serialize(dict(row)) for row in rows]
+    games = result.scalars().all()
+    return [
+        {
+            **_serialize_game(g),
+            "players": [{"player_name": p.player_name} for p in g.players],
+        }
+        for g in games
+    ]
 
 
 @router.get("/stats/colors")
 async def color_stats(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(
-        text(
-            """
-            SELECT
-                color,
-                COUNT(*) FILTER (WHERE is_winner) AS wins,
-                COUNT(*)                           AS appearances
-            FROM (
-                SELECT
-                    UNNEST(gp.commander_colors)          AS color,
-                    gp.player_name = g.winner_name       AS is_winner
-                FROM game_players gp
-                JOIN games g ON g.id = gp.game_id
-                WHERE g.completed_at IS NOT NULL
-                  AND g.winner_name IS NOT NULL
-                  AND gp.commander_colors IS NOT NULL
-                  AND array_length(gp.commander_colors, 1) > 0
-            ) sub
-            GROUP BY color
-            ORDER BY wins DESC, appearances DESC
-            """
+    sub = (
+        select(
+            func.unnest(GamePlayer.commander_colors).label("color"),
+            (GamePlayer.player_name == Game.winner_name).label("is_winner"),
         )
+        .join(Game, Game.id == GamePlayer.game_id)
+        .where(
+            Game.completed_at.is_not(None),
+            Game.winner_name.is_not(None),
+            GamePlayer.commander_colors.is_not(None),
+            func.array_length(GamePlayer.commander_colors, 1) > 0,
+        )
+        .subquery()
     )
-    rows = result.mappings().all()
 
-    total_result = await session.execute(
-        text("SELECT COUNT(*) FROM games WHERE completed_at IS NOT NULL")
+    result = await session.execute(
+        select(
+            sub.c.color,
+            func.count().filter(sub.c.is_winner).label("wins"),
+            func.count().label("appearances"),
+        )
+        .group_by(sub.c.color)
+        .order_by(func.count().filter(sub.c.is_winner).desc(), func.count().desc())
     )
-    total_games = total_result.scalar_one()
+    rows = result.all()
+
+    total_games = await session.scalar(
+        select(func.count()).where(Game.completed_at.is_not(None)).select_from(Game)
+    )
 
     colors = [
         {
-            "color": row["color"],
-            "wins": row["wins"],
-            "appearances": row["appearances"],
-            "winRate": round(row["wins"] / row["appearances"] * 100, 1) if row["appearances"] else 0,
+            "color": row.color,
+            "wins": row.wins,
+            "appearances": row.appearances,
+            "winRate": round(row.wins / row.appearances * 100, 1) if row.appearances else 0,
         }
         for row in rows
     ]
@@ -118,21 +110,17 @@ async def color_stats(session: AsyncSession = Depends(get_session)):
 
 @router.get("/{game_id}")
 async def get_game(game_id: int, session: AsyncSession = Depends(get_session)):
-    game_result = await session.execute(
-        text("SELECT * FROM games WHERE id = :id"),
-        {"id": game_id},
+    result = await session.execute(
+        select(Game).where(Game.id == game_id).options(selectinload(Game.players))
     )
-    game_row = game_result.mappings().first()
-    if game_row is None:
+    game = result.scalar_one_or_none()
+    if game is None:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    players_result = await session.execute(
-        text("SELECT * FROM game_players WHERE game_id = :id ORDER BY id"),
-        {"id": game_id},
-    )
-    players = [_serialize(dict(r)) for r in players_result.mappings().all()]
-
-    return {**_serialize(dict(game_row)), "players": players}
+    return {
+        **_serialize_game(game),
+        "players": [_serialize_player(p) for p in game.players],
+    }
 
 
 @router.post("/{game_id}/complete", response_model=CompleteGameResponse)
@@ -142,58 +130,49 @@ async def complete_game(
     session: AsyncSession = Depends(get_session),
 ):
     async with session.begin():
-        result = await session.execute(
-            text("SELECT started_at FROM games WHERE id = :id"),
-            {"id": game_id},
-        )
-        row = result.mappings().first()
-        if row is None:
+        game = await session.get(Game, game_id)
+        if game is None:
             raise HTTPException(status_code=404, detail="Game not found")
 
-        started_at: datetime = row["started_at"]
         completed_at = datetime.now(timezone.utc)
-        duration_seconds = int((completed_at - started_at).total_seconds())
+        duration_seconds = int((completed_at - game.started_at).total_seconds())
 
-        await session.execute(
-            text(
-                "UPDATE games SET completed_at = :completed, duration_seconds = :dur, "
-                "winner_name = :winner WHERE id = :id"
-            ),
-            {
-                "completed": completed_at,
-                "dur": duration_seconds,
-                "winner": body.winnerName,
-                "id": game_id,
-            },
-        )
+        game.completed_at = completed_at
+        game.duration_seconds = duration_seconds
+        game.winner_name = body.winnerName
 
-        for player in body.players:
-            await session.execute(
-                text(
-                    "UPDATE game_players "
-                    "SET final_life = :life, final_poison = :poison, "
-                    "    eliminated = :elim, commander_damage_dealt = :cmd_dmg "
-                    "WHERE id = :pid AND game_id = :gid"
-                ),
-                {
-                    "life": player.finalLife,
-                    "poison": player.finalPoison,
-                    "elim": player.eliminated,
-                    "cmd_dmg": player.commanderDamageDealt,
-                    "pid": player.id,
-                    "gid": game_id,
-                },
-            )
+        for p in body.players:
+            player = await session.get(GamePlayer, p.id)
+            if player and player.game_id == game_id:
+                player.final_life = p.finalLife
+                player.final_poison = p.finalPoison
+                player.eliminated = p.eliminated
+                player.commander_damage_dealt = p.commanderDamageDealt
 
     return {"success": True, "durationSeconds": duration_seconds}
 
 
-def _serialize(row: dict) -> dict:
-    """Convert non-JSON-serializable values (datetime) to strings."""
-    out = {}
-    for k, v in row.items():
-        if isinstance(v, datetime):
-            out[k] = v.isoformat()
-        else:
-            out[k] = v
-    return out
+def _serialize_game(game: Game) -> dict:
+    return {
+        "id": game.id,
+        "started_at": game.started_at.isoformat() if game.started_at else None,
+        "completed_at": game.completed_at.isoformat() if game.completed_at else None,
+        "duration_seconds": game.duration_seconds,
+        "starting_life": game.starting_life,
+        "winner_name": game.winner_name,
+        "player_count": game.player_count,
+    }
+
+
+def _serialize_player(player: GamePlayer) -> dict:
+    return {
+        "id": player.id,
+        "game_id": player.game_id,
+        "player_name": player.player_name,
+        "commander_name": player.commander_name,
+        "commander_colors": player.commander_colors,
+        "final_life": player.final_life,
+        "final_poison": player.final_poison,
+        "eliminated": player.eliminated,
+        "commander_damage_dealt": player.commander_damage_dealt,
+    }
