@@ -1,8 +1,9 @@
 """JWT helpers — stubs until auth is activated."""
 import jwt
+from ..config import settings
 
-SECRET_KEY = "change-me-in-production"
-ALGORITHM = "HS256"
+SECRET_KEY = settings.jwt_secret_key
+ALGORITHM = settings.jwt_algorithm
 
 
 def create_token(data: dict) -> str:

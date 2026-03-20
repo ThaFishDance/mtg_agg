@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     db_name: str = "mtg_app"
     db_user: str = "postgres"
     db_password: str = "postgres"
+    jwt_secret_key: str = "changeme"
+    jwt_algorithm: str = "HS256"
 
     @property
     def database_url(self) -> str:
