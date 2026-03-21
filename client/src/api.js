@@ -1,5 +1,3 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? ''
-
-console.log('API_BASE:', API_BASE)
+const API_BASE = 'https://api.thecloudbrew.com'
 
 export default API_BASE
