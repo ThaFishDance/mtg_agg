@@ -17,7 +17,7 @@ from ..schemas import (
 router = APIRouter()
 
 
-@router.post("/", status_code=201, response_model=CreateGameResponse)
+@router.post("", status_code=201, response_model=CreateGameResponse)
 async def create_game(
     body: CreateGameRequest,
     session: AsyncSession = Depends(get_session),
@@ -46,7 +46,7 @@ async def create_game(
     return {"gameId": game.id, "players": [{"id": p.id, "name": p.player_name} for p in player_objects]}
 
 
-@router.get("/")
+@router.get("")
 async def list_games(session: AsyncSession = Depends(get_session)):
     result = await session.execute(
         select(Game)
