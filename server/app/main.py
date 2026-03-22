@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
     await app.state.scryfall.close()
 
 
-app = FastAPI(title="MTG Commander Tracker", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="MTG Commander Tracker", version="2.0.0", lifespan=lifespan, redirect_slashes=False)
 
 app.add_middleware(
     CORSMiddleware,
