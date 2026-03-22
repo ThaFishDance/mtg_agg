@@ -53,7 +53,7 @@ export default function GameSetup({ onGameStart }) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/api/games/`, {
+      const res = await fetch(`${API_BASE}/api/games`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ players, startingLife }),
