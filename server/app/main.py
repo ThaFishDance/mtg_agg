@@ -18,10 +18,13 @@ app = FastAPI(title="MTG Commander Tracker", version="2.0.0", lifespan=lifespan,
 
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=["http://localhost:5173", "http://localhost:5174"],  # dev
-    allow_origins=["https://thecloudbrew.com", "https://www.thecloudbrew.com"],  # prod
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_origins=[
+        "https://thecloudbrew.com",
+        "https://www.thecloudbrew.com",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(games.router, prefix="/api/games", tags=["games"])
