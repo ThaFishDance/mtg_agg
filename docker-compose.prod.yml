@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-mtg_app}
+      POSTGRES_USER: ${DB_USER:-mtg_app}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./server/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - mtg_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mtg_app} -d ${DB_NAME:-mtg_app}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./server
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-mtg_app}
+      DB_USER: ${DB_USER:-mtg_app}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 3001
+
+  frontend:
+    build: ./client
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  mtg_db_data:
