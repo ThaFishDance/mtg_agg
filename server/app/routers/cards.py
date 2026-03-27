@@ -33,11 +33,10 @@ async def lookup_card(
     try:
         return await scryfall.lookup(query)
     except httpx.HTTPStatusError as exc:
-        raise HTTPException(
-            status_code=exc.response.status_code,
-            detail="Card not found",
-        ) from exc
+        if exc.response.status_code == 404:
+            raise HTTPException(status_code=404, detail="Card not found") from exc
+        raise HTTPException(status_code=503, detail="Card lookup unavailable") from exc
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Lookup failed") from exc
+        raise HTTPException(status_code=503, detail="Card lookup unavailable") from exc

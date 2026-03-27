@@ -1,3 +1,3 @@
-const API_BASE = 'https://api.thecloudbrew.com'
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 export default API_BASE
