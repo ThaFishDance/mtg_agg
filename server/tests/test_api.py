@@ -22,6 +22,40 @@ async def test_health(client):
 
 
 # ---------------------------------------------------------------------------
+# Cards
+# ---------------------------------------------------------------------------
+
+async def test_cards_autocomplete_returns_empty_list_when_query_missing(client, test_app):
+    test_app.state.scryfall = MagicMock(autocomplete=AsyncMock(return_value=["Atraxa"]))
+
+    response = await client.get("/api/cards/autocomplete")
+
+    assert response.status_code == 200
+    assert response.json() == []
+    test_app.state.scryfall.autocomplete.assert_not_awaited()
+
+
+async def test_cards_autocomplete_returns_empty_list_when_query_blank(client, test_app):
+    test_app.state.scryfall = MagicMock(autocomplete=AsyncMock(return_value=["Atraxa"]))
+
+    response = await client.get("/api/cards/autocomplete", params={"query": "   "})
+
+    assert response.status_code == 200
+    assert response.json() == []
+    test_app.state.scryfall.autocomplete.assert_not_awaited()
+
+
+async def test_cards_autocomplete_delegates_to_scryfall(client, test_app):
+    test_app.state.scryfall = MagicMock(autocomplete=AsyncMock(return_value=["The Wise Mothman"]))
+
+    response = await client.get("/api/cards/autocomplete", params={"query": "  the wise moth  "})
+
+    assert response.status_code == 200
+    assert response.json() == ["The Wise Mothman"]
+    test_app.state.scryfall.autocomplete.assert_awaited_once_with("the wise moth")
+
+
+# ---------------------------------------------------------------------------
 # Routing: trailing-slash behavior
 # ---------------------------------------------------------------------------
 

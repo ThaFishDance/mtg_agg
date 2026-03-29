@@ -9,9 +9,9 @@ router = APIRouter()
 @router.get("/autocomplete")
 async def autocomplete_card(
     request: Request,
-    query: str = Query(..., description="Partial card name"),
+    query: str | None = Query(default=None, description="Partial card name"),
 ):
-    query = query.strip()
+    query = (query or "").strip()
     if not query:
         return []
     try:

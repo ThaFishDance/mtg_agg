@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Game {
+  id              Int          @id @default(autoincrement())
+  startedAt       DateTime     @default(now()) @db.Timestamptz
+  completedAt     DateTime?    @db.Timestamptz
+  durationSeconds Int?
+  startingLife    Int          @default(40)
+  winnerName      String?
+  playerCount     Int
+  players         GamePlayer[]
+  events          GameEvent[]
+
+  @@map("games")
+}
+
+model GamePlayer {
+  id                   Int         @id @default(autoincrement())
+  gameId               Int
+  playerName           String
+  commanderName        String?
+  commanderColors      String[]
+  finalLife            Int?
+  finalPoison          Int         @default(0)
+  eliminated           Boolean     @default(false)
+  commanderDamageDealt Int         @default(0)
+  game                 Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  events               GameEvent[]
+
+  @@map("game_players")
+}
+
+model GameEvent {
+  id        Int        @id @default(autoincrement())
+  gameId    Int
+  playerId  Int?
+  eventType String
+  amount    Int?
+  createdAt DateTime   @default(now()) @db.Timestamptz
+  game      Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player    GamePlayer? @relation(fields: [playerId], references: [id], onDelete: SetNull)
+
+  @@map("game_events")
+}
