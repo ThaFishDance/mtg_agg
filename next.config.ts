@@ -3,7 +3,10 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
-    domains: ['cards.scryfall.io', 'c1.scryfall.com'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'cards.scryfall.io' },
+      { protocol: 'https', hostname: 'c1.scryfall.com' },
+    ],
   },
 }
 
