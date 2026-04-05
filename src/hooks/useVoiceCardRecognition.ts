@@ -3,6 +3,27 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FlashData } from '@/components/CardFlashOverlay'
 
+// Web Speech API — not yet included in TypeScript's DOM lib
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number
+  results: { length: number; [index: number]: SpeechRecognitionResult }
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  maxAlternatives: number
+  onstart: ((this: SpeechRecognition, ev: Event) => void) | null
+  onend: ((this: SpeechRecognition, ev: Event) => void) | null
+  onerror: ((this: SpeechRecognition, ev: { error: string }) => void) | null
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null
+  start(): void
+  stop(): void
+}
+
+declare var SpeechRecognition: { prototype: SpeechRecognition; new(): SpeechRecognition }
+
 const LOOKUP_COOLDOWN_MS = 2500
 const DISPLAY_MS = 3000
 const ACTION_PATTERNS = [
@@ -61,8 +82,8 @@ export default function useVoiceCardRecognition({
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const shouldRestartRef = useRef(false)
-  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const lookupDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hideTimeoutRef = useRef<number | null>(null)
+  const lookupDebounceRef = useRef<number | null>(null)
   const lastLookupRef = useRef<{ name: string; at: number }>({ name: '', at: 0 })
 
   useEffect(() => {

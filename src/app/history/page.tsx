@@ -106,7 +106,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="text-center mb-8">
         <h2 className="font-cinzel text-3xl font-bold mb-2" style={{ color: '#c9a84c' }}>
           Game History

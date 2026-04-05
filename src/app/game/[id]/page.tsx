@@ -180,7 +180,7 @@ export default function GamePage() {
         : 'Voice off')
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <CardFlashOverlay flash={activeFlash} />
 
       {/* Sticky top bar */}

@@ -9,12 +9,12 @@ datasource db {
 
 model Game {
   id              Int          @id @default(autoincrement())
-  startedAt       DateTime     @default(now()) @db.Timestamptz
-  completedAt     DateTime?    @db.Timestamptz
-  durationSeconds Int?
-  startingLife    Int          @default(40)
-  winnerName      String?
-  playerCount     Int
+  startedAt       DateTime     @default(now()) @db.Timestamptz @map("started_at")
+  completedAt     DateTime?    @db.Timestamptz                 @map("completed_at")
+  durationSeconds Int?                                         @map("duration_seconds")
+  startingLife    Int          @default(40)                    @map("starting_life")
+  winnerName      String?                                      @map("winner_name")
+  playerCount     Int                                          @map("player_count")
   players         GamePlayer[]
   events          GameEvent[]
 
@@ -23,14 +23,14 @@ model Game {
 
 model GamePlayer {
   id                   Int         @id @default(autoincrement())
-  gameId               Int
-  playerName           String
-  commanderName        String?
-  commanderColors      String[]
-  finalLife            Int?
-  finalPoison          Int         @default(0)
+  gameId               Int                    @map("game_id")
+  playerName           String                 @map("player_name")
+  commanderName        String?                @map("commander_name")
+  commanderColors      String[]               @map("commander_colors")
+  finalLife            Int?                   @map("final_life")
+  finalPoison          Int         @default(0) @map("final_poison")
   eliminated           Boolean     @default(false)
-  commanderDamageDealt Int         @default(0)
+  commanderDamageDealt Int         @default(0) @map("commander_damage_dealt")
   game                 Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
   events               GameEvent[]
 
@@ -38,13 +38,13 @@ model GamePlayer {
 }
 
 model GameEvent {
-  id        Int        @id @default(autoincrement())
-  gameId    Int
-  playerId  Int?
-  eventType String
+  id        Int         @id @default(autoincrement())
+  gameId    Int                              @map("game_id")
+  playerId  Int?                             @map("player_id")
+  eventType String                           @map("event_type")
   amount    Int?
-  createdAt DateTime   @default(now()) @db.Timestamptz
-  game      Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now()) @db.Timestamptz @map("created_at")
+  game      Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
   player    GamePlayer? @relation(fields: [playerId], references: [id], onDelete: SetNull)
 
   @@map("game_events")

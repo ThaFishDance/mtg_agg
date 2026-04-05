@@ -3,25 +3,43 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    @apply border-border;
-    box-sizing: border-box;
-  }
-  body {
-    @apply bg-[#0d1117] text-gray-100;
+  html {
     font-family: 'Inter', sans-serif;
+  }
+
+  body {
+    @apply bg-primary text-white;
+    background-color: #0d1117;
+    color: white;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-gold text-[#0d1117] font-semibold px-4 py-2 rounded hover:opacity-90 transition-opacity font-sans;
+    @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200;
+    background-color: #c9a84c;
+    color: #0d1117;
   }
+  .btn-primary:hover {
+    background-color: #d4b96a;
+  }
+
   .btn-secondary {
-    @apply bg-transparent border border-gold text-gold px-4 py-2 rounded hover:bg-gold hover:text-[#0d1117] transition-colors font-sans;
+    @apply px-4 py-2 rounded-lg font-semibold border transition-all duration-200;
+    border-color: #c9a84c;
+    color: #c9a84c;
   }
+  .btn-secondary:hover {
+    background-color: rgba(201, 168, 76, 0.1);
+  }
+
   .btn-danger {
-    @apply bg-transparent border border-[#e05c3a] text-[#e05c3a] px-4 py-2 rounded hover:bg-[#e05c3a] hover:text-white transition-colors font-sans;
+    @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200;
+    background-color: #e05c3a;
+    color: white;
+  }
+  .btn-danger:hover {
+    background-color: #c94e2e;
   }
 }
 
