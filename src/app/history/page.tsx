@@ -61,7 +61,10 @@ export default function HistoryPage() {
 
   useEffect(() => {
     fetch('/api/games')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`Failed to fetch games (${r.status})`)
+        return r.json()
+      })
       .then((data) => {
         setGames(data)
         setLoading(false)
