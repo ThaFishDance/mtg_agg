@@ -138,7 +138,7 @@ Set these in `.env.local` for local dev or pass via `--env-file .env` for produc
 
 Hosted on a DigitalOcean droplet. SSL is handled by Cloudflare (Flexible mode).
 
-Cloudflare origin port: **8080** (mapped to Next.js container port 3000 in `docker-compose.prod.yml`).
+Cloudflare origin port: **80** (mapped to Next.js container port 3000 in `docker-compose.prod.yml`).
 
 Before production deploy:
 1. `cp deploy.prod.env.example .env`
