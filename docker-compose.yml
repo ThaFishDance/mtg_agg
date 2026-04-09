@@ -1,35 +1,32 @@
 services:
   db:
     image: postgres:16-alpine
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: mtg_app
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
     volumes:
-      - ./server/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-      - mtg_db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+      - ./prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d mtg_app"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  api:
-    build: ./server
+  web:
+    build: .
     ports:
-      - "3001:3001"
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: mtg_app
-      DB_USER: postgres
-      DB_PASSWORD: postgres
+      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 3001 --reload
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/mtg_app
+      APP_ENV: development
+      NODE_ENV: production
 
 volumes:
-  mtg_db_data:
+  postgres_data:

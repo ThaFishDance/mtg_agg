@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Game {
+  id              Int          @id @default(autoincrement())
+  startedAt       DateTime     @default(now()) @db.Timestamptz @map("started_at")
+  completedAt     DateTime?    @db.Timestamptz                 @map("completed_at")
+  durationSeconds Int?                                         @map("duration_seconds")
+  startingLife    Int          @default(40)                    @map("starting_life")
+  winnerName      String?                                      @map("winner_name")
+  playerCount     Int                                          @map("player_count")
+  players         GamePlayer[]
+  events          GameEvent[]
+
+  @@map("games")
+}
+
+model GamePlayer {
+  id                   Int         @id @default(autoincrement())
+  gameId               Int                    @map("game_id")
+  playerName           String                 @map("player_name")
+  commanderName        String?                @map("commander_name")
+  commanderColors      String[]               @map("commander_colors")
+  finalLife            Int?                   @map("final_life")
+  finalPoison          Int         @default(0) @map("final_poison")
+  eliminated           Boolean     @default(false)
+  commanderDamageDealt Int         @default(0) @map("commander_damage_dealt")
+  game                 Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  events               GameEvent[]
+
+  @@map("game_players")
+}
+
+model GameEvent {
+  id        Int         @id @default(autoincrement())
+  gameId    Int                              @map("game_id")
+  playerId  Int?                             @map("player_id")
+  eventType String                           @map("event_type")
+  amount    Int?
+  createdAt DateTime    @default(now()) @db.Timestamptz @map("created_at")
+  game      Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player    GamePlayer? @relation(fields: [playerId], references: [id], onDelete: SetNull)
+
+  @@map("game_events")
+}
