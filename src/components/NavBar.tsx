@@ -27,7 +27,7 @@ export default function NavBar() {
         className="font-cinzel font-bold text-xl tracking-wide"
         style={{ color: '#c9a84c' }}
       >
-        MTG Game Manager
+        MTG Manager
       </Link>
       <div className="flex items-center gap-2">
         {NAV_LINKS.map(({ label, href }) => {
