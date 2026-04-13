@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import ColorStats from '@/components/ColorStats'
+import ManaSymbol from '@/components/ManaSymbol'
 
 interface GamePlayer {
   id: number
@@ -25,13 +26,6 @@ interface Game {
   players: GamePlayer[]
 }
 
-const MANA_COLORS: Record<string, string> = {
-  W: '#f5f0dc',
-  U: '#4a90d9',
-  B: '#a29cad',
-  R: '#e05c3a',
-  G: '#3a9e5c',
-}
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return '—'
@@ -220,17 +214,7 @@ export default function HistoryPage() {
                                 {p.commander_colors?.length > 0 && (
                                   <div className="flex gap-1">
                                     {p.commander_colors.map((c) => (
-                                      <div
-                                        key={c}
-                                        className="w-4 h-4 rounded-full text-xs flex items-center justify-center font-bold"
-                                        style={{
-                                          backgroundColor: MANA_COLORS[c] || '#374151',
-                                          color: c === 'W' ? '#1a1a1a' : '#fff',
-                                          fontSize: '9px',
-                                        }}
-                                      >
-                                        {c}
-                                      </div>
+                                      <ManaSymbol key={c} color={c} size={16} />
                                     ))}
                                   </div>
                                 )}

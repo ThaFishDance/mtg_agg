@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ManaPip from '@/components/ManaPip'
 
 const manaColors = [
   { key: 'W', color: '#f5f0dc', textColor: '#1a1a1a' },
@@ -45,18 +46,8 @@ export default function LandingPage() {
       <section className="text-center py-20 px-4">
         {/* Mana pip row */}
         <div className="flex justify-center gap-3 mb-10">
-          {manaColors.map(({ key, color, textColor }) => (
-            <div
-              key={key}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold font-cinzel transition-transform hover:scale-125"
-              style={{
-                backgroundColor: color,
-                color: textColor,
-                boxShadow: `0 0 12px ${color}88`,
-              }}
-            >
-              {key}
-            </div>
+          {manaColors.map(({ key }) => (
+            <ManaPip key={key} color={key} size={32} className="transition-transform hover:scale-125" />
           ))}
         </div>
 

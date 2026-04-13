@@ -2,13 +2,14 @@
 
 import { useRef, useState } from 'react'
 import Image from 'next/image'
+import ManaSymbol from '@/components/ManaSymbol'
 
-const MANA_COLORS: Record<string, { color: string; textColor: string; label: string }> = {
-  W: { color: '#f5f0dc', textColor: '#1a1a1a', label: 'W' },
-  U: { color: '#4a90d9', textColor: '#fff', label: 'U' },
-  B: { color: '#a29cad', textColor: '#fff', label: 'B' },
-  R: { color: '#e05c3a', textColor: '#fff', label: 'R' },
-  G: { color: '#3a9e5c', textColor: '#fff', label: 'G' },
+const MANA_COLORS: Record<string, { color: string }> = {
+  W: { color: '#f5f0dc' },
+  U: { color: '#4a90d9' },
+  B: { color: '#a29cad' },
+  R: { color: '#e05c3a' },
+  G: { color: '#3a9e5c' },
 }
 
 function getGlowColor(colorIdentity: string[]): string {
@@ -206,16 +207,7 @@ export default function PlayerCard({
         </div>
         <div className="flex gap-1">
           {(player.colorIdentity || []).map((c) => (
-            <div
-              key={c}
-              className="w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold"
-              style={{
-                backgroundColor: MANA_COLORS[c]?.color,
-                color: MANA_COLORS[c]?.textColor,
-              }}
-            >
-              {c}
-            </div>
+            <ManaSymbol key={c} color={c} size={20} />
           ))}
         </div>
       </div>
