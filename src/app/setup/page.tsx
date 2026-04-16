@@ -3,14 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import CommanderInput from '@/components/CommanderInput'
-
-const MANA_COLORS = [
-  { id: 'W', color: '#f5f0dc', textColor: '#1a1a1a' },
-  { id: 'U', color: '#4a90d9', textColor: '#fff' },
-  { id: 'B', color: '#a29cad', textColor: '#fff' },
-  { id: 'R', color: '#e05c3a', textColor: '#fff' },
-  { id: 'G', color: '#3a9e5c', textColor: '#fff' },
-]
+import ManaSymbol from '@/components/ManaSymbol'
 
 interface PlayerSetup {
   name: string
@@ -233,22 +226,9 @@ export default function SetupPage() {
                     Colors:
                   </span>
                   <div className="flex gap-1.5">
-                    {player.colorIdentity.map((c) => {
-                      const mc = MANA_COLORS.find((m) => m.id === c)
-                      return mc ? (
-                        <div
-                          key={c}
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-cinzel"
-                          style={{
-                            backgroundColor: mc.color,
-                            color: mc.textColor,
-                            boxShadow: `0 0 6px ${mc.color}88`,
-                          }}
-                        >
-                          {c}
-                        </div>
-                      ) : null
-                    })}
+                    {player.colorIdentity.map((c) => (
+                      <ManaSymbol key={c} color={c} size={24} />
+                    ))}
                   </div>
                 </div>
               )}

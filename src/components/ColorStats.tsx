@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import ManaPip from '@/components/ManaPip'
 
 interface ColorData {
   color: string
@@ -71,16 +72,7 @@ export default function ColorStats() {
       <div className="space-y-3">
         {colorRows.map(({ key, hex, name, wins, appearances, winRate }) => (
           <div key={key} className="flex items-center gap-3">
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-cinzel flex-shrink-0"
-              style={{
-                backgroundColor: hex,
-                color: key === 'W' ? '#1a1a1a' : '#fff',
-                boxShadow: appearances > 0 ? `0 0 8px ${hex}66` : 'none',
-              }}
-            >
-              {key}
-            </div>
+            <ManaPip color={key} size={24} />
 
             <span
               className="w-12 text-sm flex-shrink-0"
