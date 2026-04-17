@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import CommanderInput from '@/components/CommanderInput'
 import ManaSymbol from '@/components/ManaSymbol'
+import PodSelector from '@/components/PodSelector'
 
 interface PlayerSetup {
   name: string
@@ -26,6 +27,7 @@ export default function SetupPage() {
     Array.from({ length: 4 }, (_, i) => createPlayer(i))
   )
   const [startingLife, setStartingLife] = useState(40)
+  const [podId, setPodId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -72,13 +74,17 @@ export default function SetupPage() {
       )
       return
     }
+    if (!podId) {
+      setError('Please select a pod for this game')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
       const res = await fetch('/api/games', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ players, startingLife }),
+        body: JSON.stringify({ players, startingLife, podId }),
       })
       if (!res.ok) throw new Error('Failed to create game')
       const data = await res.json()
@@ -121,6 +127,7 @@ export default function SetupPage() {
           <h3 className="font-cinzel font-semibold text-lg" style={{ color: '#c9a84c' }}>
             Game Settings
           </h3>
+          <PodSelector value={podId} onChange={setPodId} />
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">

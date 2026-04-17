@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
+import { requireSession } from '@/lib/session'
 
 const CreateGameSchema = z.object({
+  podId: z.string().cuid(),
   startingLife: z.number().int().min(1).max(999).default(40),
   players: z.array(
     z.object({
@@ -13,10 +15,29 @@ const CreateGameSchema = z.object({
   ).min(2).max(6),
 })
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const podId = searchParams.get('podId')
+
+    // If podId is provided, verify the caller is a pod member
+    if (podId) {
+      const { session, error } = await requireSession()
+      if (error) return error
+
+      const membership = await db.podMember.findUnique({
+        where: { podId_userId: { podId, userId: session.user.id } },
+      })
+      if (!membership) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
     const games = await db.game.findMany({
-      where: { completedAt: { not: null } },
+      where: {
+        completedAt: { not: null },
+        ...(podId ? { podId } : {}),
+      },
       orderBy: { startedAt: 'desc' },
       include: {
         players: {
@@ -41,6 +62,7 @@ export async function GET() {
       starting_life: g.startingLife,
       winner_name: g.winnerName,
       player_count: g.playerCount,
+      pod_id: g.podId,
       players: g.players.map((p) => ({
         id: p.id,
         player_name: p.playerName,
@@ -61,6 +83,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const { session, error } = await requireSession()
+    if (error) return error
+
     const body = await request.json()
     const parsed = CreateGameSchema.safeParse(body)
 
@@ -71,12 +96,21 @@ export async function POST(request: Request) {
       )
     }
 
-    const { players, startingLife } = parsed.data
+    const { players, startingLife, podId } = parsed.data
+
+    // Verify caller is a member of the pod
+    const membership = await db.podMember.findUnique({
+      where: { podId_userId: { podId, userId: session.user.id } },
+    })
+    if (!membership) {
+      return NextResponse.json({ error: 'You are not a member of this pod' }, { status: 403 })
+    }
 
     const game = await db.game.create({
       data: {
         startingLife,
         playerCount: players.length,
+        podId,
         players: {
           create: players.map((p) => ({
             playerName: p.name,

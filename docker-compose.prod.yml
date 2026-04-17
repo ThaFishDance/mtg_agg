@@ -27,6 +27,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       APP_ENV: production
       NODE_ENV: production
+      AUTH_SECRET: ${AUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
 
 volumes:
   postgres_data:

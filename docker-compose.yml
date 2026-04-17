@@ -27,6 +27,8 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/mtg_app
       APP_ENV: development
       NODE_ENV: production
+      AUTH_SECRET: "${AUTH_SECRET:-dev-secret-change-me}"
+      NEXTAUTH_URL: "${NEXTAUTH_URL:-http://localhost:3000}"
 
 volumes:
   postgres_data:

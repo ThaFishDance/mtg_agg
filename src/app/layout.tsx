@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { Cinzel, Inter } from 'next/font/google'
+import { SessionProvider } from 'next-auth/react'
+import { auth } from '@/auth'
 import NavBar from '@/components/NavBar'
 import './globals.css'
 
@@ -22,19 +24,22 @@ export const metadata: Metadata = {
   description: 'The all-in-one Commander game tracker — life totals, voice card lookup, and a full history of every match at your table.',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const session = await auth()
+
   return (
     <html lang="en" className={`${cinzel.variable} ${inter.variable}`}>
       <body className="bg-[#0d1117] text-white min-h-screen">
-        <NavBar />
-
-        <main>
-          {children}
-        </main>
+        <SessionProvider session={session}>
+          <NavBar />
+          <main>
+            {children}
+          </main>
+        </SessionProvider>
       </body>
     </html>
   )

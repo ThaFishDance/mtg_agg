@@ -2,10 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import AuthButton from '@/components/AuthButton'
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
   { label: 'New Game', href: '/setup' },
+  { label: 'Pods', href: '/pods' },
   { label: 'History', href: '/history' },
 ]
 
@@ -47,6 +49,9 @@ export default function NavBar() {
             </Link>
           )
         })}
+        <div className="ml-4 pl-4" style={{ borderLeft: '1px solid #c9a84c33' }}>
+          <AuthButton />
+        </div>
       </div>
     </nav>
   )

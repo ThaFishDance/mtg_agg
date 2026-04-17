@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
+import { requireSession } from '@/lib/session'
 
 const CompleteGameSchema = z.object({
   winnerName: z.string().min(1),
@@ -20,6 +21,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error: authError } = await requireSession()
+    if (authError) return authError
+
     const { id } = await params
     const gameId = parseInt(id, 10)
     if (isNaN(gameId)) {
