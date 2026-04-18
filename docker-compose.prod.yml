@@ -29,6 +29,7 @@ services:
       NODE_ENV: production
       AUTH_SECRET: ${AUTH_SECRET}
       NEXTAUTH_URL: ${NEXTAUTH_URL}
+      AUTH_TRUST_HOST: "true"
 
 volumes:
   postgres_data:
