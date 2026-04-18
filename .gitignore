@@ -7,3 +7,4 @@ dist/
 /server/.venv/
 .idea
 .next
+next-env.d.ts
