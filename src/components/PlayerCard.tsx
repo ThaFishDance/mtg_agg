@@ -2,19 +2,19 @@
 
 import { useRef, useState } from 'react'
 import Image from 'next/image'
-import ManaSymbol from '@/components/ManaSymbol'
+import ManaPip from '@/components/ManaPip'
 
-const MANA_COLORS: Record<string, { color: string }> = {
-  W: { color: '#f5f0dc' },
-  U: { color: '#4a90d9' },
-  B: { color: '#a29cad' },
-  R: { color: '#e05c3a' },
-  G: { color: '#3a9e5c' },
+const MANA_COLORS: Record<string, string> = {
+  W: '#f5f0dc',
+  U: '#4a90d9',
+  B: '#a29cad',
+  R: '#e05c3a',
+  G: '#3a9e5c',
 }
 
 function getGlowColor(colorIdentity: string[]): string {
   if (!colorIdentity || colorIdentity.length === 0) return '#c9a84c'
-  if (colorIdentity.length === 1) return MANA_COLORS[colorIdentity[0]]?.color || '#c9a84c'
+  if (colorIdentity.length === 1) return MANA_COLORS[colorIdentity[0]] || '#c9a84c'
   return '#c9a84c'
 }
 
@@ -207,7 +207,7 @@ export default function PlayerCard({
         </div>
         <div className="flex gap-1">
           {(player.colorIdentity || []).map((c) => (
-            <ManaSymbol key={c} color={c} size={20} />
+            <ManaPip key={c} color={c} size={24} />
           ))}
         </div>
       </div>
