@@ -76,6 +76,7 @@ export default function PlayerCard({
   const [editingLife, setEditingLife] = useState(false)
   const [lifeInput, setLifeInput] = useState('')
   const [lifeEffects, setLifeEffects] = useState<LifeEffect[]>([])
+  const [flipped, setFlipped] = useState(false)
   const effectIdRef = useRef(0)
 
   const lifePct = Math.max(0, player.life / player.startingLife)
@@ -152,6 +153,7 @@ export default function PlayerCard({
         border: `2px solid ${glowColor}44`,
         boxShadow: player.eliminated ? 'none' : `0 0 20px ${glowColor}22`,
         opacity: player.eliminated ? 0.6 : 1,
+        transform: flipped ? 'rotate(180deg)' : undefined,
       }}
     >
       {/* Life effects layer */}
@@ -205,10 +207,20 @@ export default function PlayerCard({
             </div>
           )}
         </div>
-        <div className="flex gap-1">
-          {(player.colorIdentity || []).map((c) => (
-            <ManaPip key={c} color={c} size={24} />
-          ))}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setFlipped((f) => !f)}
+            className="w-7 h-7 rounded flex items-center justify-center text-base transition-colors"
+            style={{ backgroundColor: '#ffffff11', color: '#9ca3af' }}
+            title="Flip card"
+          >
+            ⟳
+          </button>
+          <div className="flex gap-1">
+            {(player.colorIdentity || []).map((c) => (
+              <ManaPip key={c} color={c} size={24} />
+            ))}
+          </div>
         </div>
       </div>
 
