@@ -180,12 +180,36 @@ export default function GamePage() {
         : 'Voice off')
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6 ">
       <CardFlashOverlay flash={activeFlash} />
 
-      {/* Sticky top bar */}
+      
+
+      {/* Player grid */}
       <div
-        className="sticky top-[57px] z-40 rounded-xl px-4 py-3 mb-6"
+        className="grid gap-4 mb-6"
+        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+      >
+        {players.map((player) => (
+          <PlayerCard
+            key={player.id}
+            player={player}
+            allPlayers={players}
+            onLifeChange={(life) => handleLifeChange(player.id, life)}
+            onPoisonChange={(poison) => handlePoisonChange(player.id, poison)}
+            onCommanderDamageChange={(fromId, dmg) =>
+              handleCommanderDamageChange(player.id, fromId, dmg)
+            }
+            onToggleEliminated={(eliminated) =>
+              handleToggleEliminated(player.id, eliminated)
+            }
+          />
+        ))}
+      </div>
+
+      {/* End Game Bar */}
+      <div
+        className="top-[57px] z-40 rounded-xl px-4 py-3"
         style={{ backgroundColor: '#161b22', border: '1px solid #c9a84c33' }}
       >
         <div className="flex items-center justify-between gap-4">
@@ -278,28 +302,6 @@ export default function GamePage() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Player grid */}
-      <div
-        className="grid gap-4"
-        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-      >
-        {players.map((player) => (
-          <PlayerCard
-            key={player.id}
-            player={player}
-            allPlayers={players}
-            onLifeChange={(life) => handleLifeChange(player.id, life)}
-            onPoisonChange={(poison) => handlePoisonChange(player.id, poison)}
-            onCommanderDamageChange={(fromId, dmg) =>
-              handleCommanderDamageChange(player.id, fromId, dmg)
-            }
-            onToggleEliminated={(eliminated) =>
-              handleToggleEliminated(player.id, eliminated)
-            }
-          />
-        ))}
       </div>
 
       {/* End Game Modal */}

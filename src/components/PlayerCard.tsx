@@ -2,19 +2,19 @@
 
 import { useRef, useState } from 'react'
 import Image from 'next/image'
-import ManaSymbol from '@/components/ManaSymbol'
+import ManaPip from '@/components/ManaPip'
 
-const MANA_COLORS: Record<string, { color: string }> = {
-  W: { color: '#f5f0dc' },
-  U: { color: '#4a90d9' },
-  B: { color: '#a29cad' },
-  R: { color: '#e05c3a' },
-  G: { color: '#3a9e5c' },
+const MANA_COLORS: Record<string, string> = {
+  W: '#f5f0dc',
+  U: '#4a90d9',
+  B: '#a29cad',
+  R: '#e05c3a',
+  G: '#3a9e5c',
 }
 
 function getGlowColor(colorIdentity: string[]): string {
   if (!colorIdentity || colorIdentity.length === 0) return '#c9a84c'
-  if (colorIdentity.length === 1) return MANA_COLORS[colorIdentity[0]]?.color || '#c9a84c'
+  if (colorIdentity.length === 1) return MANA_COLORS[colorIdentity[0]] || '#c9a84c'
   return '#c9a84c'
 }
 
@@ -76,6 +76,7 @@ export default function PlayerCard({
   const [editingLife, setEditingLife] = useState(false)
   const [lifeInput, setLifeInput] = useState('')
   const [lifeEffects, setLifeEffects] = useState<LifeEffect[]>([])
+  const [flipped, setFlipped] = useState(false)
   const effectIdRef = useRef(0)
 
   const lifePct = Math.max(0, player.life / player.startingLife)
@@ -152,6 +153,7 @@ export default function PlayerCard({
         border: `2px solid ${glowColor}44`,
         boxShadow: player.eliminated ? 'none' : `0 0 20px ${glowColor}22`,
         opacity: player.eliminated ? 0.6 : 1,
+        transform: flipped ? 'rotate(180deg)' : undefined,
       }}
     >
       {/* Life effects layer */}
@@ -205,26 +207,36 @@ export default function PlayerCard({
             </div>
           )}
         </div>
-        <div className="flex gap-1">
-          {(player.colorIdentity || []).map((c) => (
-            <ManaSymbol key={c} color={c} size={20} />
-          ))}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setFlipped((f) => !f)}
+            className="w-7 h-7 rounded flex items-center justify-center text-base transition-colors"
+            style={{ backgroundColor: '#ffffff11', color: '#9ca3af' }}
+            title="Flip card"
+          >
+            ⟳
+          </button>
+          <div className="flex gap-1">
+            {(player.colorIdentity || []).map((c) => (
+              <ManaPip key={c} color={c} size={24} />
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Life total */}
-      <div className="flex items-center justify-center gap-3 relative z-10">
-        <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-center gap-6 relative z-10">
+        <div className="flex flex-row gap-3">
           <button
             onClick={() => submitLifeChange(player.life + 5)}
-            className="w-10 h-7 rounded text-xs font-semibold"
+            className="w-16 h-12 rounded-lg text-base font-semibold"
             style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}
           >
             +5
           </button>
           <button
             onClick={() => submitLifeChange(player.life + 1)}
-            className="w-10 h-7 rounded text-xs font-semibold"
+            className="w-16 h-12 rounded-lg text-base font-semibold"
             style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}
           >
             +1
@@ -251,20 +263,20 @@ export default function PlayerCard({
               {player.life}
             </div>
           )}
-          <div className="text-xs text-gray-500 mt-1">life</div>
+          {/* <div className="text-xs text-gray-500 mt-1">life</div> */}
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-row gap-3">
           <button
             onClick={() => submitLifeChange(player.life - 1)}
-            className="w-10 h-7 rounded text-xs font-semibold"
+            className="w-16 h-12 rounded-lg text-base font-semibold"
             style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}
           >
             -1
           </button>
           <button
             onClick={() => submitLifeChange(player.life - 5)}
-            className="w-10 h-7 rounded text-xs font-semibold"
+            className="w-16 h-12 rounded-lg text-base font-semibold"
             style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}
           >
             -5
