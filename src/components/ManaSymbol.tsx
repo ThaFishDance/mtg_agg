@@ -6,6 +6,7 @@ const MANA_SVG: Record<string, string> = {
   B: '/land/swamp.svg',
   R: '/land/mountain.svg',
   G: '/land/forest.svg',
+  C: '/land/colorless.svg',
 }
 
 export default function ManaSymbol({ color, size = 20 }: { color: string; size?: number }) {

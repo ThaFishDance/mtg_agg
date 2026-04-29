@@ -169,7 +169,10 @@ export default function GamePage() {
   }
 
   const activePlayers = players.filter((p) => !p.eliminated)
-  const cols = players.length <= 2 ? 2 : players.length <= 4 ? 2 : 3
+  const gridClass =
+    players.length <= 4
+      ? 'grid-cols-1 sm:grid-cols-2'
+      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
   const voiceStatus = !voiceSupported
     ? 'Voice unavailable in this browser'
     : voiceError ||
@@ -186,10 +189,7 @@ export default function GamePage() {
       
 
       {/* Player grid */}
-      <div
-        className="grid gap-4 mb-6"
-        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-      >
+      <div className={`grid gap-4 mb-6 ${gridClass}`}>
         {players.map((player) => (
           <PlayerCard
             key={player.id}
@@ -212,8 +212,8 @@ export default function GamePage() {
         className="top-[57px] z-40 rounded-xl px-4 py-3"
         style={{ backgroundColor: '#161b22', border: '1px solid #c9a84c33' }}
       >
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6 flex-wrap">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-4 flex-wrap flex-1">
             <div className="text-center">
               <div className="text-xs text-gray-400">Time</div>
               <div className="font-cinzel font-semibold text-lg" style={{ color: '#c9a84c' }}>
@@ -248,7 +248,7 @@ export default function GamePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
             <button
               onClick={() => voiceSupported && setVoiceEnabled((current) => !current)}
               disabled={!voiceSupported}

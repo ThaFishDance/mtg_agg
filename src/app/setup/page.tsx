@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import CommanderInput from '@/components/CommanderInput'
-import ManaSymbol from '@/components/ManaSymbol'
+import ManaPip from '@/components/ManaPip'
 
 interface PlayerSetup {
   name: string
@@ -121,7 +121,7 @@ export default function SetupPage() {
           <h3 className="font-cinzel font-semibold text-lg" style={{ color: '#c9a84c' }}>
             Game Settings
           </h3>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Number of Players
@@ -199,7 +199,7 @@ export default function SetupPage() {
               style={{ backgroundColor: '#1c2230' }}
             >
               <h3 className="font-semibold text-gray-200">Player {i + 1}</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Player Name</label>
                   <input
@@ -220,14 +220,14 @@ export default function SetupPage() {
                   onSelect={(val) => handleCommanderSelect(i, val)}
                 />
               </div>
-              {player.colorIdentity.length > 0 && (
+              {player.commanderName && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs" style={{ color: '#9ca3af' }}>
                     Colors:
                   </span>
                   <div className="flex gap-1.5">
-                    {player.colorIdentity.map((c) => (
-                      <ManaSymbol key={c} color={c} size={24} />
+                    {(player.colorIdentity.length ? player.colorIdentity : ['C']).map((c) => (
+                      <ManaPip key={c} color={c} size={24} />
                     ))}
                   </div>
                 </div>
