@@ -3,8 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import PlayerCard, { type PlayerData } from '@/components/PlayerCard'
-import CardFlashOverlay from '@/components/CardFlashOverlay'
-import useVoiceCardRecognition from '@/hooks/useVoiceCardRecognition'
 
 function formatTime(ms: number): string {
   const s = Math.floor(ms / 1000)
@@ -27,17 +25,7 @@ export default function GamePage() {
   const [showEndModal, setShowEndModal] = useState(false)
   const [selectedWinner, setSelectedWinner] = useState('')
   const [ending, setEnding] = useState(false)
-  const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
-
-  const {
-    isSupported: voiceSupported,
-    isListening,
-    error: voiceError,
-    lastTranscript,
-    activeFlash,
-    lastMatchedName,
-  } = useVoiceCardRecognition({ enabled: voiceEnabled })
 
   // Load game state from sessionStorage or API
   useEffect(() => {
@@ -170,18 +158,9 @@ export default function GamePage() {
 
   const activePlayers = players.filter((p) => !p.eliminated)
   const cols = players.length <= 2 ? 2 : players.length <= 4 ? 2 : 3
-  const voiceStatus = !voiceSupported
-    ? 'Voice unavailable in this browser'
-    : voiceError ||
-      (voiceEnabled
-        ? isListening
-          ? 'Listening for "I cast …" or "activate …"'
-          : 'Starting mic…'
-        : 'Voice off')
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 ">
-      <CardFlashOverlay flash={activeFlash} />
 
       
 
@@ -250,28 +229,6 @@ export default function GamePage() {
 
           <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={() => voiceSupported && setVoiceEnabled((current) => !current)}
-              disabled={!voiceSupported}
-              className="px-4 py-2 rounded-lg font-semibold text-sm transition-all"
-              style={
-                voiceEnabled
-                  ? { backgroundColor: '#3a9e5c', color: '#07110a' }
-                  : !voiceSupported
-                  ? {
-                      backgroundColor: '#374151',
-                      color: '#6b7280',
-                      cursor: 'not-allowed',
-                    }
-                  : {
-                      backgroundColor: '#1f2937',
-                      color: '#c9a84c',
-                      border: '1px solid #c9a84c55',
-                    }
-              }
-            >
-              {voiceEnabled ? 'Voice On' : 'Voice Off'}
-            </button>
-            <button
               onClick={() => setShowEndModal(true)}
               className="px-4 py-2 rounded-lg font-semibold text-sm transition-all"
               style={{ backgroundColor: '#e05c3a', color: 'white' }}
@@ -279,28 +236,6 @@ export default function GamePage() {
               End Game
             </button>
           </div>
-        </div>
-
-        <div className="mt-3 flex flex-col gap-1">
-          <div
-            className="text-xs"
-            style={{ color: voiceEnabled && isListening ? '#86efac' : '#9ca3af' }}
-          >
-            {voiceStatus}
-          </div>
-          <div className="text-xs" style={{ color: '#6b7280' }}>
-            Try: &quot;I cast Sol Ring&quot; or &quot;I pay 1 and activate Sensei&apos;s Divining Top&quot;
-          </div>
-          {lastTranscript && (
-            <div className="text-xs truncate" style={{ color: '#6b7280' }}>
-              Last heard: &quot;{lastTranscript}&quot;
-            </div>
-          )}
-          {lastMatchedName && (
-            <div className="text-xs truncate" style={{ color: '#c9a84c' }}>
-              Last matched card: {lastMatchedName}
-            </div>
-          )}
         </div>
       </div>
 

@@ -18,10 +18,10 @@ const features = [
     accent: '#c9a84c',
   },
   {
-    icon: '🎙️',
-    title: 'Voice Card Lookup',
+    icon: '🃏',
+    title: 'Deck Building',
     description:
-      'Say "I cast Rhystic Study" and see the card art instantly. Voice recognition listens continuously during your game so you never lose focus on the table.',
+      'Build and manage your Commander decks with card search powered by Scryfall. Import a full 100-card list in seconds or add cards one by one.',
     accent: '#4a90d9',
   },
   {
@@ -62,7 +62,7 @@ export default function LandingPage() {
           className="mx-auto mb-10 leading-relaxed"
           style={{ maxWidth: '520px', color: '#8b949e', fontSize: '1.125rem' }}
         >
-          The all-in-one Commander game tracker — life totals, voice card lookup, and a full
+          The all-in-one Commander game tracker — life totals, deck building, and a full
           history of every match at your table.
         </p>
 

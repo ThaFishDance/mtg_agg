@@ -19,7 +19,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'MTG Commander Tracker',
-  description: 'The all-in-one Commander game tracker — life totals, voice card lookup, and a full history of every match at your table.',
+  description: 'The all-in-one Commander game tracker — life totals, deck building, and a full history of every match at your table.',
 }
 
 export default function RootLayout({

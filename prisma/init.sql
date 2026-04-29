@@ -28,3 +28,20 @@ CREATE TABLE IF NOT EXISTS game_events (
   amount      INTEGER,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS decks (
+  id                SERIAL PRIMARY KEY,
+  name              TEXT NOT NULL,
+  commander_name    TEXT,
+  commander_colors  TEXT[],
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS deck_cards (
+  id        SERIAL PRIMARY KEY,
+  deck_id   INTEGER NOT NULL REFERENCES decks(id) ON DELETE CASCADE,
+  card_name TEXT NOT NULL,
+  quantity  INTEGER NOT NULL DEFAULT 1,
+  category  TEXT NOT NULL DEFAULT 'mainboard'
+);

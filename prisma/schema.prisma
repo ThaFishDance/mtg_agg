@@ -49,3 +49,26 @@ model GameEvent {
 
   @@map("game_events")
 }
+
+model Deck {
+  id              Int        @id @default(autoincrement())
+  name            String
+  commanderName   String?                @map("commander_name")
+  commanderColors String[]               @map("commander_colors")
+  createdAt       DateTime   @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt       DateTime   @updatedAt @db.Timestamptz      @map("updated_at")
+  cards           DeckCard[]
+
+  @@map("decks")
+}
+
+model DeckCard {
+  id       Int    @id @default(autoincrement())
+  deckId   Int                  @map("deck_id")
+  cardName String               @map("card_name")
+  quantity Int    @default(1)
+  category String @default("mainboard")
+  deck     Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@map("deck_cards")
+}
