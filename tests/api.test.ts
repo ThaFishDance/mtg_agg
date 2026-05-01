@@ -10,6 +10,9 @@ vi.mock('@/lib/db', () => ({
       create: vi.fn(),
       count: vi.fn(),
     },
+    gamePlayer: {
+      findMany: vi.fn(),
+    },
     $queryRaw: vi.fn(),
   },
 }))
@@ -34,6 +37,9 @@ const mockDb = db as {
     findUnique: ReturnType<typeof vi.fn>
     create: ReturnType<typeof vi.fn>
     count: ReturnType<typeof vi.fn>
+  }
+  gamePlayer: {
+    findMany: ReturnType<typeof vi.fn>
   }
   $queryRaw: ReturnType<typeof vi.fn>
 }
@@ -214,8 +220,12 @@ describe('GET /api/games/[id]', () => {
 
 describe('GET /api/games/stats/colors', () => {
   it('returns color stats', async () => {
-    mockDb.$queryRaw.mockResolvedValue([
-      { color: 'U', wins: BigInt(3), appearances: BigInt(5) },
+    mockDb.gamePlayer.findMany.mockResolvedValue([
+      { playerName: 'Alice', commanderColors: ['U'], game: { winnerName: 'Alice' } },
+      { playerName: 'Bob', commanderColors: ['U'], game: { winnerName: 'Alice' } },
+      { playerName: 'Charlie', commanderColors: ['U'], game: { winnerName: 'Charlie' } },
+      { playerName: 'Dave', commanderColors: ['U'], game: { winnerName: 'Charlie' } },
+      { playerName: 'Eve', commanderColors: ['U'], game: { winnerName: 'Eve' } },
     ])
     mockDb.game.count.mockResolvedValue(10)
 
@@ -228,7 +238,7 @@ describe('GET /api/games/stats/colors', () => {
   })
 
   it('returns 500 on db error', async () => {
-    mockDb.$queryRaw.mockRejectedValue(new Error('db error'))
+    mockDb.gamePlayer.findMany.mockRejectedValue(new Error('db error'))
     const res = await colorStatsGET()
     expect(res.status).toBe(500)
   })
