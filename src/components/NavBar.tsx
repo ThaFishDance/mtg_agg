@@ -20,7 +20,7 @@ export default function NavBar() {
 
   return (
     <nav
-      className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 border-b"
+      className="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 py-3 border-b"
       style={{ backgroundColor: '#161b22', borderColor: '#c9a84c33' }}
     >
       <Link
@@ -30,7 +30,7 @@ export default function NavBar() {
       >
         MTG Manager
       </Link>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 ml-2">
         {NAV_LINKS.map(({ label, href }) => {
           const active = isActive(href)
           return (
