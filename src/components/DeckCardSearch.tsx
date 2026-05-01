@@ -99,34 +99,20 @@ export default function DeckCardSearch({ deckId, onCardAdded }: DeckCardSearchPr
         placeholder={adding ? 'Adding...' : 'Search for a card to add...'}
         disabled={adding}
         autoComplete="off"
-        className="w-full rounded-lg px-3 py-2 text-sm"
-        style={{
-          backgroundColor: '#161b22',
-          border: '1px solid #374151',
-          color: 'white',
-          opacity: adding ? 0.6 : 1,
-        }}
+        className="w-full rounded-lg px-3 py-2 text-sm bg-secondary border border-gray-700 text-white disabled:opacity-60"
       />
       {open && suggestions.length > 0 && (
-        <ul
-          className="absolute z-50 w-full mt-1 rounded-lg overflow-hidden text-sm"
-          style={{
-            backgroundColor: '#1c2230',
-            border: '1px solid #374151',
-            boxShadow: '0 8px 24px #00000088',
-          }}
-        >
+        <ul className="absolute z-50 w-full mt-1 rounded-lg overflow-hidden text-sm bg-card border border-gray-700 shadow-[0_8px_24px_#00000088]">
           {suggestions.map((name, i) => (
             <li
               key={name}
               onMouseDown={() => addCard(name)}
               onMouseEnter={() => setHighlighted(i)}
-              className="px-3 py-2 cursor-pointer transition-colors"
-              style={{
-                backgroundColor: i === highlighted ? '#c9a84c22' : 'transparent',
-                color: i === highlighted ? '#c9a84c' : '#e6edf3',
-                borderLeft: i === highlighted ? '2px solid #c9a84c' : '2px solid transparent',
-              }}
+              className={`px-3 py-2 cursor-pointer transition-colors border-l-2 ${
+                i === highlighted
+                  ? 'bg-gold/13 text-gold border-l-gold'
+                  : 'bg-transparent text-[#e6edf3] border-l-transparent'
+              }`}
             >
               {name}
             </li>

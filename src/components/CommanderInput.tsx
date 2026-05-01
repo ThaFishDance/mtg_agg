@@ -99,8 +99,8 @@ export default function CommanderInput({ value, onSelect }: CommanderInputProps)
 
   return (
     <div ref={containerRef} className="relative">
-      <label className="block text-xs mb-1" style={{ color: isEmpty ? '#e05c3a' : '#9ca3af' }}>
-        Commander Name <span style={{ color: '#e05c3a' }}>*</span>
+      <label className={`block text-xs mb-1 ${isEmpty ? 'text-mana-r' : 'text-gray-400'}`}>
+        Commander Name <span className="text-mana-r">*</span>
       </label>
       <input
         type="text"
@@ -109,36 +109,23 @@ export default function CommanderInput({ value, onSelect }: CommanderInputProps)
         onKeyDown={handleKeyDown}
         onFocus={() => suggestions.length > 0 && setOpen(true)}
         autoComplete="off"
-        className="w-full rounded-lg px-3 py-2 text-sm"
-        style={{
-          backgroundColor: '#161b22',
-          border: `1px solid ${isEmpty ? '#e05c3a55' : '#374151'}`,
-          color: 'white',
-        }}
+        className={`w-full rounded-lg px-3 py-2 text-sm bg-secondary text-white border ${isEmpty ? 'border-mana-r/33' : 'border-gray-700'}`}
       />
       {error && (
-        <p className="mt-1 text-xs" style={{ color: '#e05c3a' }}>{error}</p>
+        <p className="mt-1 text-xs text-mana-r">{error}</p>
       )}
       {open && suggestions.length > 0 && (
-        <ul
-          className="absolute z-50 w-full mt-1 rounded-lg overflow-hidden text-sm"
-          style={{
-            backgroundColor: '#1c2230',
-            border: '1px solid #374151',
-            boxShadow: '0 8px 24px #00000088',
-          }}
-        >
+        <ul className="absolute z-50 w-full mt-1 rounded-lg overflow-hidden text-sm bg-card border border-gray-700 shadow-[0_8px_24px_#00000088]">
           {suggestions.map((name, i) => (
             <li
               key={name}
               onMouseDown={() => select(name)}
               onMouseEnter={() => setHighlighted(i)}
-              className="px-3 py-2 cursor-pointer transition-colors"
-              style={{
-                backgroundColor: i === highlighted ? '#c9a84c22' : 'transparent',
-                color: i === highlighted ? '#c9a84c' : '#e6edf3',
-                borderLeft: i === highlighted ? '2px solid #c9a84c' : '2px solid transparent',
-              }}
+              className={`px-3 py-2 cursor-pointer transition-colors border-l-2 ${
+                i === highlighted
+                  ? 'bg-gold/13 text-gold border-l-gold'
+                  : 'bg-transparent text-[#e6edf3] border-l-transparent'
+              }`}
             >
               {name}
             </li>
