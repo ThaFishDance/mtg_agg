@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import Link from 'next/link'
 import ColorStats from '@/components/ColorStats'
-import ManaSymbol from '@/components/ManaSymbol'
+import ManaPip from '@/components/ManaPip'
 
 interface GamePlayer {
   id: number
@@ -130,29 +130,33 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div
-          className="rounded-xl overflow-hidden"
+          className="rounded-xl overflow-hidden overflow-x-auto"
           style={{ border: '1px solid #374151' }}
         >
-          <table className="w-full">
+          <table className="w-full min-w-[520px]">
             <thead>
               <tr style={{ backgroundColor: '#161b22' }}>
-                {['Date', 'Players', 'Winner', 'Duration', 'Starting Life', ''].map(
-                  (h) => (
+                {[
+                  { label: 'Date', cls: '' },
+                  { label: 'Players', cls: '' },
+                  { label: 'Winner', cls: '' },
+                  { label: 'Duration', cls: 'hidden sm:table-cell' },
+                  { label: 'Starting Life', cls: 'hidden sm:table-cell' },
+                  { label: '', cls: '' },
+                ].map(({ label, cls }) => (
                     <th
-                      key={h}
-                      className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                      key={label}
+                      className={`text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider ${cls}`}
                     >
-                      {h}
+                      {label}
                     </th>
-                  )
-                )}
+                  ))}
               </tr>
             </thead>
             <tbody>
               {games.map((game, idx) => (
-                <>
+                <Fragment key={game.id}>
                   <tr
-                    key={game.id}
                     className="cursor-pointer transition-all"
                     style={{
                       backgroundColor: idx % 2 === 0 ? '#1c2230' : '#18202e',
@@ -181,10 +185,10 @@ export default function HistoryPage() {
                         {game.winner_name || '—'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-300">
+                    <td className="px-4 py-3 text-sm text-gray-300 hidden sm:table-cell">
                       {formatDuration(game.duration_seconds)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-300">
+                    <td className="px-4 py-3 text-sm text-gray-300 hidden sm:table-cell">
                       {game.starting_life}
                     </td>
                     <td className="px-4 py-3 text-right text-xs text-gray-500">
@@ -196,7 +200,7 @@ export default function HistoryPage() {
                     <tr key={`${game.id}-detail`} style={{ backgroundColor: '#161b22' }}>
                       <td colSpan={6} className="px-4 py-4">
                         {details[game.id] ? (
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                             {details[game.id].players.map((p) => (
                               <div
                                 key={p.id}
@@ -211,10 +215,10 @@ export default function HistoryPage() {
                                     {p.commander_name}
                                   </div>
                                 )}
-                                {p.commander_colors?.length > 0 && (
+                                {p.commander_name && (
                                   <div className="flex gap-1">
-                                    {p.commander_colors.map((c) => (
-                                      <ManaSymbol key={c} color={c} size={16} />
+                                    {(p.commander_colors?.length ? p.commander_colors : ['C']).map((c) => (
+                                      <ManaPip key={c} color={c} size={16} />
                                     ))}
                                   </div>
                                 )}
@@ -238,7 +242,7 @@ export default function HistoryPage() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

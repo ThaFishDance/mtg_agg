@@ -217,7 +217,7 @@ export default function PlayerCard({
             ⟳
           </button>
           <div className="flex gap-1">
-            {(player.colorIdentity || []).map((c) => (
+            {(player.colorIdentity?.length ? player.colorIdentity : ['C']).map((c) => (
               <ManaPip key={c} color={c} size={24} />
             ))}
           </div>
@@ -225,18 +225,18 @@ export default function PlayerCard({
       </div>
 
       {/* Life total */}
-      <div className="flex items-center justify-center gap-6 relative z-10">
-        <div className="flex flex-row gap-3">
+      <div className="flex items-center justify-center gap-2 sm:gap-6 relative z-10">
+        <div className="flex flex-row gap-1.5 sm:gap-3">
           <button
             onClick={() => submitLifeChange(player.life + 5)}
-            className="w-16 h-12 rounded-lg text-base font-semibold"
+            className="w-12 h-10 sm:w-16 sm:h-12 rounded-lg text-sm sm:text-base font-semibold"
             style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}
           >
             +5
           </button>
           <button
             onClick={() => submitLifeChange(player.life + 1)}
-            className="w-16 h-12 rounded-lg text-base font-semibold"
+            className="w-12 h-10 sm:w-16 sm:h-12 rounded-lg text-sm sm:text-base font-semibold"
             style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}
           >
             +1
@@ -266,17 +266,17 @@ export default function PlayerCard({
           {/* <div className="text-xs text-gray-500 mt-1">life</div> */}
         </div>
 
-        <div className="flex flex-row gap-3">
+        <div className="flex flex-row gap-1.5 sm:gap-3">
           <button
             onClick={() => submitLifeChange(player.life - 1)}
-            className="w-16 h-12 rounded-lg text-base font-semibold"
+            className="w-12 h-10 sm:w-16 sm:h-12 rounded-lg text-sm sm:text-base font-semibold"
             style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}
           >
             -1
           </button>
           <button
             onClick={() => submitLifeChange(player.life - 5)}
-            className="w-16 h-12 rounded-lg text-base font-semibold"
+            className="w-12 h-10 sm:w-16 sm:h-12 rounded-lg text-sm sm:text-base font-semibold"
             style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}
           >
             -5

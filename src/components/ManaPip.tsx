@@ -6,6 +6,7 @@ const MANA_COLOR: Record<string, string> = {
   B: '#a29cad',
   R: '#e05c3a',
   G: '#3a9e5c',
+  C: '#9ca3af',
 }
 
 export default function ManaPip({
