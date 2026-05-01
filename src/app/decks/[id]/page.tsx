@@ -6,6 +6,7 @@ import DeckCardSearch from '@/components/DeckCardSearch'
 import DeckCardList from '@/components/DeckCardList'
 import DeckStats from '@/components/DeckStats'
 import DeckImportModal from '@/components/DeckImportModal'
+import ManaPip from '@/components/ManaPip'
 
 interface DeckCard {
   id: number
@@ -99,9 +100,18 @@ export default function DeckPage() {
             {deck.name}
           </h1>
           {deck.commander_name && (
-            <p className="text-sm mt-1" style={{ color: '#8b949e' }}>
-              Commander: {deck.commander_name}
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-sm" style={{ color: '#8b949e' }}>
+                Commander: {deck.commander_name}
+              </p>
+              {deck.commander_colors.length > 0 && (
+                <div className="flex gap-1">
+                  {deck.commander_colors.map((c) => (
+                    <ManaPip key={c} color={c} size={20} />
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
         <button
