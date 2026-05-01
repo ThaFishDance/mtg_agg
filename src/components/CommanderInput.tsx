@@ -12,16 +12,21 @@ interface CommanderInputProps {
   onSelect: (selection: CommanderSelection) => void
 }
 
+function isValidCommander(typeLine: string): boolean {
+  return typeLine.includes('Legendary') && (typeLine.includes('Creature') || typeLine.includes('Planeswalker'))
+}
+
 export default function CommanderInput({ value, onSelect }: CommanderInputProps) {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(0)
+  const [error, setError] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (value.trim().length < 2) {
+    if (value.trim().length < 4) {
       setSuggestions([])
       setOpen(false)
       return
@@ -54,6 +59,7 @@ export default function CommanderInput({ value, onSelect }: CommanderInputProps)
   }, [])
 
   async function select(name: string) {
+    setError(null)
     onSelect({ name, colorIdentity: [] })
     setOpen(false)
     setSuggestions([])
@@ -61,6 +67,11 @@ export default function CommanderInput({ value, onSelect }: CommanderInputProps)
       const res = await fetch(`/api/cards/lookup?query=${encodeURIComponent(name)}`)
       if (res.ok) {
         const card = await res.json()
+        if (!isValidCommander(card.typeLine ?? '')) {
+          setError('Commander must be a legendary creature or planeswalker.')
+          onSelect({ name: '', colorIdentity: [] })
+          return
+        }
         onSelect({ name: card.name, colorIdentity: card.colorIdentity ?? [] })
       }
     } catch {
@@ -94,7 +105,7 @@ export default function CommanderInput({ value, onSelect }: CommanderInputProps)
       <input
         type="text"
         value={value}
-        onChange={(e) => onSelect({ name: e.target.value, colorIdentity: [] })}
+        onChange={(e) => { setError(null); onSelect({ name: e.target.value, colorIdentity: [] }) }}
         onKeyDown={handleKeyDown}
         onFocus={() => suggestions.length > 0 && setOpen(true)}
         autoComplete="off"
@@ -105,6 +116,9 @@ export default function CommanderInput({ value, onSelect }: CommanderInputProps)
           color: 'white',
         }}
       />
+      {error && (
+        <p className="mt-1 text-xs" style={{ color: '#e05c3a' }}>{error}</p>
+      )}
       {open && suggestions.length > 0 && (
         <ul
           className="absolute z-50 w-full mt-1 rounded-lg overflow-hidden text-sm"
