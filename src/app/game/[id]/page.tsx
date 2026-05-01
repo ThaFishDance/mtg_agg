@@ -134,7 +134,7 @@ export default function GamePage() {
       sessionStorage.removeItem(`game_setup_${gameId}`)
       router.push('/history')
     } catch (err) {
-      console.error('Failed to end game:', err)
+      console.error('Failed to end game')
     } finally {
       setEnding(false)
     }

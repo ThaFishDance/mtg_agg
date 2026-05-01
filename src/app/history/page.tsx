@@ -81,7 +81,7 @@ export default function HistoryPage() {
         const data = await res.json()
         setDetails((prev) => ({ ...prev, [gameId]: data }))
       } catch (err) {
-        console.error('Failed to load game details:', err)
+        console.error('Failed to load game details')
       }
     }
   }
