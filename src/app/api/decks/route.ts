@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 
@@ -9,8 +10,12 @@ const CreateDeckSchema = z.object({
 })
 
 export async function GET() {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const decks = await db.deck.findMany({
+      where: { userId },
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { cards: true } } },
     })
@@ -31,6 +36,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await request.json()
     const parsed = CreateDeckSchema.safeParse(body)
@@ -39,7 +47,7 @@ export async function POST(request: Request) {
     }
     const { name, commanderName, commanderColors } = parsed.data
     const deck = await db.deck.create({
-      data: { name, commanderName, commanderColors },
+      data: { userId, name, commanderName, commanderColors },
     })
     return NextResponse.json({ id: deck.id }, { status: 201 })
   } catch (error) {

@@ -9,12 +9,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Full stack via Docker Compose (recommended):**
 ```bash
 docker compose up -d   # starts PostgreSQL + Next.js (port 3000)
+
+docker compose --env-file .env.local up -d --build
 ```
 
 **Local (no Docker):**
 ```bash
 npm install
-# requires a local PostgreSQL instance; copy .env.example to .env.local and set DATABASE_URL
+# requires a local PostgreSQL instance; copy .env.local.example to .env.local and set DATABASE_URL
 npx prisma generate
 npm run dev            # Next.js dev server on port 3000
 ```
@@ -22,9 +24,9 @@ npm run dev            # Next.js dev server on port 3000
 **Production build (droplet):**
 ```bash
 git pull
-cp deploy.prod.env.example .env
-# edit .env — set POSTGRES_PASSWORD and update DATABASE_URL password to match
-docker compose --env-file .env -f docker-compose.prod.yml up -d --build
+cp deploy.prod.env.example .env.local
+# edit .env.local — set POSTGRES_PASSWORD and update DATABASE_URL password to match
+docker compose --env-file .env.local -f docker-compose.prod.yml up -d --build
 ```
 
 **Local URLs:**
@@ -67,6 +69,7 @@ Next.js App Router. Pages are under `src/app/` as `page.tsx` files; API routes a
 - **`/decks/[id]`** — Deck detail: card list, stats, search, and import
 
 **Key components:**
+- **NavBar** — Top nav with Clerk auth UI: shows `SignInButton`/`SignUpButton` when signed out, nav links + `UserButton` when signed in
 - **CommanderInput** — Autocomplete input; debounces 300 ms, fetches from `/api/cards/autocomplete`, resolves color identity via `/api/cards/lookup` on selection
 - **PlayerCard** — Life, poison, commander damage per opponent, eliminated status; glow driven by commander color identity
 - **ManaPip / ManaSymbol** — Renders individual mana color symbols
@@ -75,6 +78,14 @@ Next.js App Router. Pages are under `src/app/` as `page.tsx` files; API routes a
 - **DeckImportModal** — Bulk import cards into a deck (up to 500 cards via `/api/decks/[id]/cards/bulk`)
 - **DeckStats** — Summary stats for a deck (card counts by category)
 - **ColorStats** — Win-rate bar per mana color, fetched from `/api/games/stats/colors`
+
+### Authentication
+
+Clerk (`@clerk/nextjs`) handles auth. `ClerkProvider` wraps the entire app in `src/app/layout.tsx`.
+
+**Middleware:** `src/proxy.ts` exports `clerkMiddleware()` and the route matcher config. **Note:** Next.js requires this file to be named `src/middleware.ts` to run as middleware — rename it if auth isn't gating routes.
+
+Nav links (`/setup`, `/decks`, `/history`) are only rendered to signed-in users via Clerk's `<Show when="signed-in">` component. Signed-out users see `SignInButton` / `SignUpButton`.
 
 ### Backend (`src/app/api/`, `src/lib/`)
 
@@ -133,6 +144,8 @@ Tailwind CSS with a custom MTG dark theme. Key custom values in `tailwind.config
 | `POSTGRES_DB` | Docker Compose (db service) | Database name |
 | `POSTGRES_USER` | Docker Compose (db service) | DB username |
 | `POSTGRES_PASSWORD` | Docker Compose (db service) | DB password — must match `DATABASE_URL` |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk (client) | Publishable key from Clerk dashboard |
+| `CLERK_SECRET_KEY` | Clerk (server) | Secret key from Clerk dashboard |
 
 Set these in `.env.local` for local dev or pass via `--env-file .env` for production.
 

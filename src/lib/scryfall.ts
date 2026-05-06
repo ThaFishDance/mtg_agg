@@ -28,6 +28,28 @@ export interface ScryfallCard {
   colorIdentity: string[]
 }
 
+export interface ScryfallPrint {
+  id: string
+  name: string
+  set: string
+  set_name: string
+  collector_number: string
+  released_at: string
+  finishes: string[]
+  image_uris?: { normal?: string; large?: string }
+  card_faces?: { image_uris?: { normal?: string; large?: string } }[]
+  color_identity?: string[]
+  prices?: { usd?: string | null; usd_foil?: string | null }
+}
+
+export async function fetchPrints(cardName: string): Promise<ScryfallPrint[]> {
+  const url = `${SCRYFALL_BASE}/cards/search?q=${encodeURIComponent(`!"${cardName}"`)}&unique=prints&order=released&dir=desc`
+  const res = await fetchWithTimeout(url)
+  if (!res.ok) return []
+  const data = await res.json()
+  return Array.isArray(data.data) ? (data.data as ScryfallPrint[]) : []
+}
+
 export async function lookup(query: string): Promise<ScryfallCard> {
   const url = `${SCRYFALL_BASE}/cards/named?fuzzy=${encodeURIComponent(query)}`
   const res = await fetchWithTimeout(url)

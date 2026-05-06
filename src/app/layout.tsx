@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Cinzel, Inter } from 'next/font/google'
 import NavBar from '@/components/NavBar'
 import './globals.css'
+import {ClerkProvider} from "@clerk/nextjs";
 
 const cinzel = Cinzel({
   subsets: ['latin'],
@@ -28,14 +29,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${cinzel.variable} ${inter.variable}`}>
-      <body className="bg-[#0d1117] text-white min-h-screen">
-        <NavBar />
-
-        <main>
-          {children}
-        </main>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={`${cinzel.variable} ${inter.variable}`}>
+        <body className="bg-primary text-white min-h-screen">
+          <NavBar />
+          <main>
+            {children}
+          </main>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

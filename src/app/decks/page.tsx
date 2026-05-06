@@ -21,7 +21,10 @@ export default function DecksPage() {
 
   useEffect(() => {
     fetch('/api/decks')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed to load decks')
+        return r.json()
+      })
       .then(setDecks)
       .catch(() => setError('Failed to load decks'))
       .finally(() => setLoading(false))

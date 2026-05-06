@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 
@@ -12,6 +13,9 @@ const BulkCardSchema = z.object({
 })
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { id } = await params
   const deckId = parseInt(id, 10)
   if (isNaN(deckId)) {
@@ -19,9 +23,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   try {
-    const deck = await db.deck.findUnique({ where: { id: deckId }, select: { id: true } })
-    if (!deck) {
-      return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
+    const deck = await db.deck.findUnique({ where: { id: deckId }, select: { id: true, userId: true } })
+    if (!deck || deck.userId !== userId) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
     const body = await request.json()

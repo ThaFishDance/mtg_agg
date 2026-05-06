@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import {Show, UserButton, SignInButton, SignUpButton} from "@clerk/nextjs";
 
 const NAV_LINKS = [
-  { label: 'Home', href: '/' },
   { label: 'New Game', href: '/setup' },
   { label: 'Decks', href: '/decks' },
+  { label: 'Inventory', href: '/inventory' },
   { label: 'History', href: '/history' },
 ]
 
@@ -25,30 +26,42 @@ export default function NavBar() {
     >
       <Link
         href="/"
-        className="font-cinzel font-bold text-xl tracking-wide"
-        style={{ color: '#c9a84c' }}
+        className="font-cinzel font-bold text-xl tracking-wide text-gold"
       >
         MTG Manager
       </Link>
-      <div className="flex items-center gap-2 ml-2">
-        {NAV_LINKS.map(({ label, href }) => {
-          const active = isActive(href)
-          return (
-            <Link
-              key={href}
-              href={href}
-              className="px-3 py-1.5 rounded text-sm font-medium transition-all"
-              style={
-                active
-                  ? { backgroundColor: '#c9a84c', color: '#0d1117' }
-                  : { color: '#9ca3af' }
-              }
-            >
-              {label}
-            </Link>
-          )
-        })}
-      </div>
+
+      <Show when="signed-out">
+        <div className="flex items-center gap-2 ml-2">
+        <SignInButton />
+        <SignUpButton />
+        </div>
+      </Show>
+
+      <Show when="signed-in">
+        <div className="flex items-center gap-2 ml-2">
+          {NAV_LINKS.map(({ label, href }) => {
+            const active = isActive(href)
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="px-3 py-1.5 rounded text-sm font-medium transition-all"
+                style={
+                  active
+                    ? { backgroundColor: '#c9a84c', color: '#0d1117' }
+                    : { color: '#9ca3af' }
+                }
+              >
+                {label}
+              </Link>
+            )
+          })}
+
+            <UserButton />
+
+        </div>
+      </Show>
     </nav>
   )
 }

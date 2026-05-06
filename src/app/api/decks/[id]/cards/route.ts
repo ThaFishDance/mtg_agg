@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 
@@ -8,9 +9,15 @@ const AddCardSchema = z.object({
 })
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const { id } = await params
     const deckId = parseInt(id)
+    const deck = await db.deck.findUnique({ where: { id: deckId }, select: { id: true, userId: true } })
+    if (!deck || deck.userId !== userId) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
     const body = await request.json()
     const parsed = AddCardSchema.safeParse(body)
     if (!parsed.success) {

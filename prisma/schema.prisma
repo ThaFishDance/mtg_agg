@@ -52,6 +52,7 @@ model GameEvent {
 
 model Deck {
   id              Int        @id @default(autoincrement())
+  userId          String                               @map("user_id")
   name            String
   commanderName   String?                @map("commander_name")
   commanderColors String[]               @map("commander_colors")
@@ -59,6 +60,7 @@ model Deck {
   updatedAt       DateTime   @updatedAt @db.Timestamptz      @map("updated_at")
   cards           DeckCard[]
 
+  @@index([userId])
   @@map("decks")
 }
 
@@ -71,4 +73,26 @@ model DeckCard {
   deck     Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
 
   @@map("deck_cards")
+}
+
+model InventoryCard {
+  id        Int      @id @default(autoincrement())
+  userId    String                                  @map("user_id")
+  cardName  String                                  @map("card_name")
+  quantity  Int      @default(1)
+  foil      Boolean  @default(false)
+  condition       String   @default("NM")
+  scryfallId      String?  @map("scryfall_id")
+  setCode         String?  @map("set_code")
+  setName         String?  @map("set_name")
+  collectorNumber String?  @map("collector_number")
+  imageUrl        String?  @map("image_url")
+  colorIdentity   String[] @map("color_identity")
+  price           Float?   @map("price")
+  priceFoil       Float?   @map("price_foil")
+  createdAt       DateTime @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt DateTime @updatedAt @db.Timestamptz      @map("updated_at")
+
+  @@index([userId])
+  @@map("inventory_cards")
 }

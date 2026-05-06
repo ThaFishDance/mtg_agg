@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS game_events (
 
 CREATE TABLE IF NOT EXISTS decks (
   id                SERIAL PRIMARY KEY,
+  user_id           TEXT NOT NULL,
   name              TEXT NOT NULL,
   commander_name    TEXT,
   commander_colors  TEXT[],
@@ -44,4 +45,23 @@ CREATE TABLE IF NOT EXISTS deck_cards (
   card_name TEXT NOT NULL,
   quantity  INTEGER NOT NULL DEFAULT 1,
   category  TEXT NOT NULL DEFAULT 'mainboard'
+);
+
+CREATE TABLE IF NOT EXISTS inventory_cards (
+  id         SERIAL PRIMARY KEY,
+  user_id    TEXT NOT NULL,
+  card_name  TEXT NOT NULL,
+  quantity   INTEGER NOT NULL DEFAULT 1,
+  foil             BOOLEAN NOT NULL DEFAULT FALSE,
+  condition        TEXT NOT NULL DEFAULT 'NM',
+  scryfall_id      TEXT,
+  set_code         TEXT,
+  set_name         TEXT,
+  collector_number TEXT,
+  image_url        TEXT,
+  color_identity   TEXT[] NOT NULL DEFAULT '{}',
+  price            DECIMAL(10,2),
+  price_foil       DECIMAL(10,2),
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

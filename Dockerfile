@@ -19,6 +19,10 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
+# Build args for NEXT_PUBLIC_ vars (baked into client bundle at build time)
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
 # Build Next.js
 RUN npm run build
 
