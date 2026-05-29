@@ -86,6 +86,44 @@ export default function HistoryPage() {
     }
   }
 
+  function renderDetail(gameId: number) {
+    if (!details[gameId]) {
+      return <div className="text-gray-400 text-sm">Loading details...</div>
+    }
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+        {details[gameId].players.map((p) => (
+          <div
+            key={p.id}
+            className="rounded-lg p-3 space-y-1"
+            style={{ backgroundColor: '#1c2230' }}
+          >
+            <div className="font-semibold text-sm text-white">{p.player_name}</div>
+            {p.commander_name && (
+              <div className="text-xs" style={{ color: '#c9a84c' }}>{p.commander_name}</div>
+            )}
+            {p.commander_name && (
+              <div className="flex gap-1">
+                {(p.commander_colors?.length ? p.commander_colors : ['C']).map((c) => (
+                  <ManaPip key={c} color={c} size={16} />
+                ))}
+              </div>
+            )}
+            <div className="flex gap-3 text-xs text-gray-400 pt-1">
+              <span>❤ {p.final_life}</span>
+              {p.final_poison > 0 && (
+                <span style={{ color: '#a78bfa' }}>☠ {p.final_poison}</span>
+              )}
+              {p.eliminated && (
+                <span style={{ color: '#e05c3a' }}>Eliminated</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -129,46 +167,28 @@ export default function HistoryPage() {
           </Link>
         </div>
       ) : (
-        <div
-          className="rounded-xl overflow-hidden overflow-x-auto"
-          style={{ border: '1px solid #374151' }}
-        >
-          <table className="w-full min-w-[520px]">
-            <thead>
-              <tr style={{ backgroundColor: '#161b22' }}>
-                {[
-                  { label: 'Date', cls: '' },
-                  { label: 'Players', cls: '' },
-                  { label: 'Winner', cls: '' },
-                  { label: 'Duration', cls: 'hidden sm:table-cell' },
-                  { label: 'Starting Life', cls: 'hidden sm:table-cell' },
-                  { label: '', cls: '' },
-                ].map(({ label, cls }) => (
-                    <th
-                      key={label}
-                      className={`text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider ${cls}`}
-                    >
-                      {label}
-                    </th>
-                  ))}
-              </tr>
-            </thead>
-            <tbody>
-              {games.map((game, idx) => (
-                <Fragment key={game.id}>
-                  <tr
-                    className="cursor-pointer transition-all"
-                    style={{
-                      backgroundColor: idx % 2 === 0 ? '#1c2230' : '#18202e',
-                      borderTop: '1px solid #37415133',
-                    }}
-                    onClick={() => toggleExpand(game.id)}
-                  >
-                    <td className="px-4 py-3 text-sm text-gray-300">
-                      {formatDate(game.started_at)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
+        <>
+          {/* Mobile: card list */}
+          <div className="block sm:hidden space-y-2">
+            {games.map((game, idx) => (
+              <Fragment key={game.id}>
+                <div
+                  onClick={() => toggleExpand(game.id)}
+                  className="rounded-xl p-4 cursor-pointer transition-all"
+                  style={{
+                    backgroundColor: idx % 2 === 0 ? '#1c2230' : '#18202e',
+                    border: '1px solid #37415133',
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-gray-400 mb-1">
+                        {formatDate(game.started_at)}
+                      </div>
+                      <div className="font-semibold text-sm" style={{ color: '#c9a84c' }}>
+                        Winner: {game.winner_name || '—'}
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-2">
                         {(game.players || []).map((p, i) => (
                           <span
                             key={i}
@@ -179,74 +199,105 @@ export default function HistoryPage() {
                           </span>
                         ))}
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="font-semibold text-sm" style={{ color: '#c9a84c' }}>
-                        {game.winner_name || '—'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-300 hidden sm:table-cell">
-                      {formatDuration(game.duration_seconds)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-300 hidden sm:table-cell">
-                      {game.starting_life}
-                    </td>
-                    <td className="px-4 py-3 text-right text-xs text-gray-500">
+                    </div>
+                    <span className="text-xs text-gray-500 flex-shrink-0 mt-1">
                       {expandedId === game.id ? '▲' : '▼'}
-                    </td>
-                  </tr>
+                    </span>
+                  </div>
+                </div>
+                {expandedId === game.id && (
+                  <div
+                    className="rounded-xl px-4 py-4"
+                    style={{ backgroundColor: '#161b22', border: '1px solid #37415133' }}
+                  >
+                    {renderDetail(game.id)}
+                  </div>
+                )}
+              </Fragment>
+            ))}
+          </div>
 
-                  {expandedId === game.id && (
-                    <tr key={`${game.id}-detail`} style={{ backgroundColor: '#161b22' }}>
-                      <td colSpan={6} className="px-4 py-4">
-                        {details[game.id] ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                            {details[game.id].players.map((p) => (
-                              <div
-                                key={p.id}
-                                className="rounded-lg p-3 space-y-1"
-                                style={{ backgroundColor: '#1c2230' }}
-                              >
-                                <div className="font-semibold text-sm text-white">
-                                  {p.player_name}
-                                </div>
-                                {p.commander_name && (
-                                  <div className="text-xs" style={{ color: '#c9a84c' }}>
-                                    {p.commander_name}
-                                  </div>
-                                )}
-                                {p.commander_name && (
-                                  <div className="flex gap-1">
-                                    {(p.commander_colors?.length ? p.commander_colors : ['C']).map((c) => (
-                                      <ManaPip key={c} color={c} size={16} />
-                                    ))}
-                                  </div>
-                                )}
-                                <div className="flex gap-3 text-xs text-gray-400 pt-1">
-                                  <span>❤ {p.final_life}</span>
-                                  {p.final_poison > 0 && (
-                                    <span style={{ color: '#a78bfa' }}>
-                                      ☠ {p.final_poison}
-                                    </span>
-                                  )}
-                                  {p.eliminated && (
-                                    <span style={{ color: '#e05c3a' }}>Eliminated</span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-gray-400 text-sm">Loading details...</div>
-                        )}
+          {/* Desktop: table */}
+          <div
+            className="hidden sm:block rounded-xl overflow-hidden"
+            style={{ border: '1px solid #374151' }}
+          >
+            <table className="w-full">
+              <thead>
+                <tr style={{ backgroundColor: '#161b22' }}>
+                  {[
+                    { label: 'Date', cls: '' },
+                    { label: 'Players', cls: '' },
+                    { label: 'Winner', cls: '' },
+                    { label: 'Duration', cls: 'hidden sm:table-cell' },
+                    { label: 'Starting Life', cls: 'hidden sm:table-cell' },
+                    { label: '', cls: '' },
+                  ].map(({ label, cls }) => (
+                    <th
+                      key={label}
+                      className={`text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider ${cls}`}
+                    >
+                      {label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {games.map((game, idx) => (
+                  <Fragment key={game.id}>
+                    <tr
+                      className="cursor-pointer transition-all"
+                      style={{
+                        backgroundColor: idx % 2 === 0 ? '#1c2230' : '#18202e',
+                        borderTop: '1px solid #37415133',
+                      }}
+                      onClick={() => toggleExpand(game.id)}
+                    >
+                      <td className="px-4 py-3 text-sm text-gray-300">
+                        {formatDate(game.started_at)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {(game.players || []).map((p, i) => (
+                            <span
+                              key={i}
+                              className="text-xs px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: '#374151', color: '#d1d5db' }}
+                            >
+                              {p.player_name}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="font-semibold text-sm" style={{ color: '#c9a84c' }}>
+                          {game.winner_name || '—'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-300 hidden sm:table-cell">
+                        {formatDuration(game.duration_seconds)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-300 hidden sm:table-cell">
+                        {game.starting_life}
+                      </td>
+                      <td className="px-4 py-3 text-right text-xs text-gray-500">
+                        {expandedId === game.id ? '▲' : '▼'}
                       </td>
                     </tr>
-                  )}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+
+                    {expandedId === game.id && (
+                      <tr key={`${game.id}-detail`} style={{ backgroundColor: '#161b22' }}>
+                        <td colSpan={6} className="px-4 py-4">
+                          {renderDetail(game.id)}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )

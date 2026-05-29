@@ -228,18 +228,18 @@ export default function PlayerCard({
       <div className="flex items-center justify-center gap-2 sm:gap-6 relative z-10">
         <div className="flex flex-row gap-1.5 sm:gap-3">
           <button
-            onClick={() => submitLifeChange(player.life + 5)}
-            className="w-12 h-10 sm:w-16 sm:h-12 rounded-lg text-sm sm:text-base font-semibold"
-            style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}
+            onClick={() => submitLifeChange(player.life - 5)}
+            className="hidden sm:block w-16 h-12 rounded-lg text-base font-semibold"
+            style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}
           >
-            +5
+            -5
           </button>
           <button
-            onClick={() => submitLifeChange(player.life + 1)}
-            className="w-12 h-10 sm:w-16 sm:h-12 rounded-lg text-sm sm:text-base font-semibold"
-            style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}
+            onClick={() => submitLifeChange(player.life - 1)}
+            className="w-16 h-12 rounded-lg text-base font-semibold"
+            style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}
           >
-            +1
+            -1
           </button>
         </div>
 
@@ -268,18 +268,18 @@ export default function PlayerCard({
 
         <div className="flex flex-row gap-1.5 sm:gap-3">
           <button
-            onClick={() => submitLifeChange(player.life - 1)}
-            className="w-12 h-10 sm:w-16 sm:h-12 rounded-lg text-sm sm:text-base font-semibold"
-            style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}
+            onClick={() => submitLifeChange(player.life + 1)}
+            className="w-16 h-12 rounded-lg text-base font-semibold"
+            style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}
           >
-            -1
+            +1
           </button>
           <button
-            onClick={() => submitLifeChange(player.life - 5)}
-            className="w-12 h-10 sm:w-16 sm:h-12 rounded-lg text-sm sm:text-base font-semibold"
-            style={{ backgroundColor: '#e05c3a22', color: '#e05c3a', border: '1px solid #e05c3a44' }}
+            onClick={() => submitLifeChange(player.life + 5)}
+            className="hidden sm:block w-16 h-12 rounded-lg text-base font-semibold"
+            style={{ backgroundColor: '#3a9e5c22', color: '#3a9e5c', border: '1px solid #3a9e5c44' }}
           >
-            -5
+            +5
           </button>
         </div>
       </div>
@@ -314,7 +314,7 @@ export default function PlayerCard({
         <div className="flex gap-1 ml-auto">
           <button
             onClick={() => onPoisonChange(Math.max(0, player.poison - 1))}
-            className="w-6 h-6 rounded text-xs font-bold"
+            className="w-8 h-8 rounded text-sm font-bold"
             style={{ backgroundColor: '#7c3aed22', color: '#a78bfa', border: '1px solid #7c3aed44' }}
           >
             -
@@ -324,7 +324,7 @@ export default function PlayerCard({
           </span>
           <button
             onClick={() => onPoisonChange(Math.min(10, player.poison + 1))}
-            className="w-6 h-6 rounded text-xs font-bold"
+            className="w-8 h-8 rounded text-sm font-bold"
             style={{ backgroundColor: '#7c3aed22', color: '#a78bfa', border: '1px solid #7c3aed44' }}
           >
             +
@@ -344,13 +344,13 @@ export default function PlayerCard({
                   <span className="text-xs text-gray-400 flex-1 truncate">{opp.name}</span>
                   <button
                     onClick={() => onCommanderDamageChange(opp.id, Math.max(0, dmg - 1))}
-                    className="w-5 h-5 rounded text-xs"
+                    className="w-8 h-8 rounded text-sm flex items-center justify-center"
                     style={{ backgroundColor: '#374151', color: '#9ca3af' }}
                   >
                     -
                   </button>
                   <span
-                    className="text-xs font-semibold w-5 text-center"
+                    className="text-xs font-semibold w-6 text-center"
                     style={{
                       color: dmg >= 21 ? '#e05c3a' : dmg >= 10 ? '#c9a84c' : '#9ca3af',
                     }}
@@ -359,7 +359,7 @@ export default function PlayerCard({
                   </span>
                   <button
                     onClick={() => onCommanderDamageChange(opp.id, dmg + 1)}
-                    className="w-5 h-5 rounded text-xs"
+                    className="w-8 h-8 rounded text-sm flex items-center justify-center"
                     style={{ backgroundColor: '#374151', color: '#9ca3af' }}
                   >
                     +

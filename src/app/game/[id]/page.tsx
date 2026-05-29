@@ -157,17 +157,13 @@ export default function GamePage() {
   }
 
   const activePlayers = players.filter((p) => !p.eliminated)
-  const cols = players.length <= 2 ? 2 : players.length <= 4 ? 2 : 3
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 ">
-
-      
+    <div className="max-w-7xl mx-auto px-4 py-6 pb-24 sm:pb-6">
 
       {/* Player grid */}
       <div
-        className="grid gap-4 mb-6"
-        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+        className={`grid gap-4 mb-6 grid-cols-1 ${players.length >= 5 ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-2'}`}
       >
         {players.map((player) => (
           <PlayerCard
@@ -188,7 +184,7 @@ export default function GamePage() {
 
       {/* End Game Bar */}
       <div
-        className="top-[57px] z-40 rounded-xl px-4 py-3"
+        className="fixed bottom-0 left-0 right-0 z-40 px-4 py-3 rounded-none sm:sticky sm:bottom-auto sm:top-[57px] sm:rounded-xl"
         style={{ backgroundColor: '#161b22', border: '1px solid #c9a84c33' }}
       >
         <div className="flex items-center justify-between gap-4">
@@ -246,7 +242,7 @@ export default function GamePage() {
           style={{ backgroundColor: '#000000bb' }}
         >
           <div
-            className="rounded-2xl p-6 w-full max-w-md space-y-4"
+            className="rounded-2xl p-6 w-full max-w-md space-y-4 mx-4 sm:mx-0"
             style={{ backgroundColor: '#1c2230', border: '2px solid #c9a84c44' }}
           >
             <h2 className="font-cinzel text-xl font-bold" style={{ color: '#c9a84c' }}>

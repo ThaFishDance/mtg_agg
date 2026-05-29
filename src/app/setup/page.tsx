@@ -107,8 +107,8 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
-      <div className="text-center mb-8">
+    <div className="max-w-3xl mx-auto px-4 py-4 sm:py-6">
+      <div className="text-center mb-6 sm:mb-8">
         <h2 className="font-cinzel text-3xl font-bold mb-2" style={{ color: '#c9a84c' }}>
           New Game Setup
         </h2>
@@ -117,7 +117,7 @@ export default function SetupPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Game settings */}
-        <div className="rounded-xl p-6 space-y-4" style={{ backgroundColor: '#1c2230' }}>
+        <div className="rounded-xl p-4 sm:p-6 space-y-4" style={{ backgroundColor: '#1c2230' }}>
           <h3 className="font-cinzel font-semibold text-lg" style={{ color: '#c9a84c' }}>
             Game Settings
           </h3>
@@ -126,13 +126,13 @@ export default function SetupPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Number of Players
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full">
                 {[2, 3, 4, 5, 6].map((n) => (
                   <button
                     key={n}
                     type="button"
                     onClick={() => handlePlayerCountChange(n)}
-                    className="w-10 h-10 rounded-lg font-semibold text-sm transition-all"
+                    className="flex-1 sm:flex-none sm:w-11 h-12 rounded-lg font-semibold text-sm transition-all"
                     style={
                       playerCount === n
                         ? { backgroundColor: '#c9a84c', color: '#0d1117' }
@@ -152,13 +152,13 @@ export default function SetupPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Starting Life Total
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full">
                 {[20, 30, 40].map((n) => (
                   <button
                     key={n}
                     type="button"
                     onClick={() => setStartingLife(n)}
-                    className="px-3 h-10 rounded-lg font-semibold text-sm transition-all"
+                    className="flex-1 sm:flex-none sm:px-4 h-12 rounded-lg font-semibold text-sm transition-all"
                     style={
                       startingLife === n
                         ? { backgroundColor: '#c9a84c', color: '#0d1117' }
@@ -178,7 +178,7 @@ export default function SetupPage() {
                   max={999}
                   value={startingLife}
                   onChange={(e) => setStartingLife(Number(e.target.value))}
-                  className="w-16 h-10 rounded-lg px-2 text-sm text-center font-semibold"
+                  className="hidden sm:block w-16 h-12 rounded-lg px-2 text-sm text-center font-semibold"
                   style={{
                     backgroundColor: '#161b22',
                     border: '1px solid #374151',
@@ -195,7 +195,7 @@ export default function SetupPage() {
           {players.map((player, i) => (
             <div
               key={i}
-              className="rounded-xl p-5 space-y-3"
+              className="rounded-xl p-4 sm:p-5 space-y-3"
               style={{ backgroundColor: '#1c2230' }}
             >
               <h3 className="font-semibold text-gray-200">Player {i + 1}</h3>
