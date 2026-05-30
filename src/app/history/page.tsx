@@ -3,6 +3,7 @@
 import { Fragment, useState, useEffect } from 'react'
 import Link from 'next/link'
 import ColorStats from '@/components/ColorStats'
+import Leaderboards from '@/components/Leaderboards'
 import ManaPip from '@/components/ManaPip'
 
 interface GamePlayer {
@@ -144,11 +145,11 @@ export default function HistoryPage() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="text-center mb-8">
         <h2 className="font-cinzel text-3xl font-bold mb-2" style={{ color: '#c9a84c' }}>
-          Game History
+          Game Analytics
         </h2>
-        <p className="text-gray-400">Past battles and their outcomes</p>
       </div>
 
+      <Leaderboards />
       <ColorStats />
 
       {games.length === 0 ? (
