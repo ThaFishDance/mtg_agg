@@ -1,0 +1,52 @@
+# Backend architecture
+
+## Boundaries and current state
+
+Accepted direction: a separate FastAPI service under `server/`; frontend work is deferred. `app/main.py` provides `create_app()` and an independent `/api/health` route with a typed response. Python 3.12 and uv are configured; API tests run in process. The legacy system combines Next.js routes, Prisma, PostgreSQL, Clerk, and Scryfall in `client/`. Do not reuse Prisma as a Python persistence layer or remove the legacy system during initial implementation.
+
+The initial domain scope is users, pods, and games under `/api/v1`, with authentication deferred. `app/models.py` maps all seven tables in the user-supplied migration using SQLAlchemy ORM. `app/schemas.py` defines typed contracts, `app/api.py` implements CRUD, and `app/db.py` provides pooled engines and a transaction per request. Synchronous routes run blocking ORM operations outside the event loop. The dependency uses function scope so commit/rollback completes before a successful response is sent. Engines are disposed during application shutdown. See SQLAlchemy's [session transaction guidance](https://docs.sqlalchemy.org/en/20/orm/session_basics.html).
+
+## Proposed layout
+
+```text
+server/
+  pyproject.toml
+  app/
+    main.py          # app factory, router registration, lifecycle
+    config.py        # validated environment configuration
+    api/             # domain routers and HTTP dependencies
+    schemas/         # Pydantic request/response models
+    services/        # domain rules when orchestration merits a module
+    db/              # persistence queries, connection lifecycle
+    integrations/    # Scryfall boundary; auth adapter if required
+  tests/
+    unit/
+    api/
+    integration/
+  docs/
+  deployment/        # future deployment assets; currently empty
+```
+
+Create modules when a task needs them; do not scaffold empty domain layers. SQLAlchemy ORM is selected. No queue, repository base class, DI framework, or cache service is selected.
+
+## Request and data flow
+
+HTTP → router/Pydantic validation → identity dependency for protected routes → domain function where needed → database query or external adapter → explicit response schema. Translate expected domain errors at the HTTP boundary. For simple reads, a route may call a focused persistence function directly.
+
+Game creation/completion and bulk import use database transactions. Owner constraints belong in queries, including nested deck-card operations. Proposed statistics aggregate completed data at the database boundary rather than loading unbounded history into application memory.
+
+## Storage and lifecycle
+
+PostgreSQL is selected by the supplied migration, with SQLAlchemy ORM and Psycopg. The new schema contains `app_user`, `pod`, `pod_member`, `pod_user_admin`, `game`, `pod_game_player`, and `game_result`. The SQL file remains the schema source; `app.migrate` applies versioned SQL explicitly with a transactional checksum ledger. There is no startup schema creation, legacy data conversion, or automatic baseline adoption. Existing-data mapping and production cutover remain deferred.
+
+Use request-scoped transaction/connection handling; initialize and release shared clients or pools during application lifecycle. Avoid network or database work at import time. Keep UTC-aware timestamps. Configure through environment variables; document only variables actually implemented. Proposed settings: environment, database connection, allowed frontend origins, upstream timeout, and auth verification configuration. Do not copy Next.js secret handling into the new service.
+
+## I/O, security, and operations
+
+Use async routes with genuinely async clients; use sync routes for blocking clients or explicitly offload blocking work. Driver/client selection determines this boundary. Share bounded HTTP connections and honor upstream throttling; no automatic unbounded retries. Authentication provider is TBD; never accept an unsigned token or client-provided identity as authentication.
+
+Proposed errors and pagination are in [API](API.md). Use standard logging initially, with request IDs and durations if implemented; avoid secrets and detailed public failures. Keep liveness independent of external services; readiness checks, monitoring backend, shutdown policy, CORS origins, workers, TLS/proxy trust, and deployment target remain TBD. Legacy deployment files are reference only and have relative-path issues after relocation; they are not a verified backend deployment recipe.
+
+## Trade-offs
+
+Modular monolith keeps development and tests simple. Separate backend means auth, CORS, and API contracts must be explicit. A clean implementation does not imply a clean production database. See [decisions](DECISIONS.md), [requirements](REQUIREMENTS.md), and [testing](TESTING.md).
