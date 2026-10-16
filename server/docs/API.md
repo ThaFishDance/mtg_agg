@@ -4,6 +4,8 @@
 
 The accepted API uses `/api/v1` and snake_case JSON. Authentication is deferred; all implemented routes are unauthenticated. Generated OpenAPI is available at `/openapi.json`, with interactive documentation at `/docs`.
 
+PlantUML endpoint map and per-endpoint sequence diagrams: [diagram index](diagrams/README.md).
+
 ## Implemented API
 
 | Resource | Create | List / retrieve | Update | Delete |

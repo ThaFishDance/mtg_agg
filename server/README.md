@@ -40,6 +40,7 @@ Without `TEST_DATABASE_URL`, PostgreSQL tests are skipped. Verified on 2026-10-1
 - [AGENTS.md](AGENTS.md) — ongoing agent instructions
 - [Requirements](docs/REQUIREMENTS.md) — confirmed needs, proposed scope, open questions
 - [Architecture](docs/ARCHITECTURE.md) — service boundaries and proposed organization
+- [Endpoint diagrams](docs/diagrams/README.md) — PlantUML endpoint map and request sequences
 - [API](docs/API.md) — legacy evidence and proposed HTTP contract
 - [Conventions](docs/CONVENTIONS.md) — implementation standards
 - [Testing](docs/TESTING.md) — verification strategy

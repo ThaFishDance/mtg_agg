@@ -1,0 +1,23 @@
+@startuml
+title PUT /api/v1/pods/{pod_id}/members/{member_id}
+hide footbox
+actor Client
+participant "FastAPI / Pydantic" as API
+participant "SQLAlchemy session" as DB
+database PostgreSQL as PG
+Client -> API: PUT /api/v1/pods/{pod_id}/members/{member_id}
+API -> API: Validate path, query and body
+note over API: Invalid input -> 422
+No authentication required
+API -> DB: get_db(): request transaction
+DB -> PG: Find member; absent or wrong pod -> 404
+DB -> PG: Replace identity fields; flush
+PG --> DB: Rows / mutation outcome
+DB --> API: Route result
+API -> API: Validate/serialize response
+API -> DB: Finish successful request
+DB -> PG: COMMIT
+API --> Client: 200
+note over API, PG: Any failure aborts the success path and rolls back.
+See transaction.puml for shared error handling.
+@enduml

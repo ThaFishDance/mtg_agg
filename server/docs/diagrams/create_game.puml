@@ -1,0 +1,23 @@
+@startuml
+title POST /api/v1/games
+hide footbox
+actor Client
+participant "FastAPI / Pydantic" as API
+participant "SQLAlchemy session" as DB
+database PostgreSQL as PG
+Client -> API: POST /api/v1/games
+API -> API: Validate path, query and body
+note over API: Invalid input -> 422
+API -> DB: get_db(): request transaction
+DB -> PG: Find pod; missing -> 404
+DB -> PG: Insert game; flush generated ID
+DB -> PG: For each player: lock member FOR SHARE; require same pod (422)
+DB -> PG: Insert players; flush (duplicates -> 409)
+DB -> PG: Load game players and nullable result
+PG --> DB: Rows / mutation outcome
+DB --> API: Route result
+API -> API: Validate/serialize response
+API -> DB: Finish successful request
+DB -> PG: COMMIT
+API --> Client: 201
+@enduml

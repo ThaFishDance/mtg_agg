@@ -1,0 +1,24 @@
+@startuml
+title GET /api/v1/pods/{pod_id}/stats/commanders
+hide footbox
+actor Client
+participant "FastAPI / Pydantic" as API
+participant "SQLAlchemy session" as DB
+database PostgreSQL as PG
+Client -> API: GET /api/v1/pods/{pod_id}/stats/commanders
+API -> API: Validate path, query and body
+note over API: Invalid input -> 422
+API -> DB: get_db(): request transaction
+DB -> PG: Find pod; missing -> 404
+DB -> PG: Join players, games and results scoped to pod
+DB -> PG: Exclude null/blank main cards
+DB -> PG: Group exact main_card/secondary_card; count appearances, wins, draws
+DB -> PG: Order by main then secondary (null first); apply limit/offset
+PG --> DB: Rows / mutation outcome
+DB --> API: Route result
+API -> API: win_rate = round(100 * wins / appearances, 2)
+API -> API: Validate/serialize response
+API -> DB: Finish successful request
+DB -> PG: COMMIT
+API --> Client: 200
+@enduml

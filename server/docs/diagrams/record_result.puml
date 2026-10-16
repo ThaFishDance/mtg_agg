@@ -1,0 +1,45 @@
+@startuml
+title POST /api/v1/games/{game_id}/result
+hide footbox
+actor Client
+participant "FastAPI / Pydantic" as API
+participant "SQLAlchemy session" as DB
+database PostgreSQL as PG
+Client -> API: POST result {player_winner: ID or null}
+API -> API: Validate required nullable winner and positive IDs
+API -> DB: get_db(): request transaction
+DB -> PG: Lock game FOR UPDATE
+break Game missing
+  DB -> PG: ROLLBACK
+  API --> Client: 404
+end
+DB -> PG: Select existing result
+break Existing result has a different winner
+  DB -> PG: ROLLBACK
+  API --> Client: 409
+end
+alt Identical result already exists
+  PG --> DB: Original result (reuse ID)
+  DB --> API: Original result; status 200
+else No result exists
+  opt Non-null winner
+    DB -> PG: Find player with this ID and game_id
+    break Winner absent or belongs to another game
+      DB -> PG: ROLLBACK
+      API --> Client: 422
+    end
+  end
+  note over DB: Explicit null winner records a draw
+  DB -> PG: Insert game_result; flush
+  PG --> DB: New result with generated ID
+  DB --> API: New result; status 201
+end
+API -> API: Validate / serialize GameResult
+API -> DB: Exit request transaction
+DB -> PG: COMMIT
+API --> Client: 200 original result / 201 new result
+note over API, PG
+Game lock serializes completion and player replacement.
+Other validation and database failures: see transaction.puml.
+end note
+@enduml

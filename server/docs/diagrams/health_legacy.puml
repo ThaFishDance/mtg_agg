@@ -1,0 +1,10 @@
+@startuml
+title GET /api/health
+hide footbox
+actor Client
+participant "FastAPI / Pydantic" as API
+Client -> API: GET /api/health
+API -> API: Build status=ok and current UTC timestamp
+API --> Client: 200 HealthResponse
+note over API: Independent of database configuration and connectivity
+@enduml

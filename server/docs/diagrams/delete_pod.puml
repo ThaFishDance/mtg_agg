@@ -1,0 +1,24 @@
+@startuml
+title DELETE /api/v1/pods/{pod_id}
+hide footbox
+actor Client
+participant "FastAPI / Pydantic" as API
+participant "SQLAlchemy session" as DB
+database PostgreSQL as PG
+Client -> API: DELETE /api/v1/pods/{pod_id}
+API -> API: Validate path, query and body
+note over API: Invalid input -> 422
+No authentication required
+API -> DB: get_db(): request transaction
+DB -> PG: Find pod; missing -> 404
+DB -> PG: Delete pod games; flush (cascade players and results)
+DB -> PG: Delete pod; flush (cascade members and admin rows)
+PG --> DB: Rows / mutation outcome
+DB --> API: Route result
+API -> API: Validate/serialize response
+API -> DB: Finish successful request
+DB -> PG: COMMIT
+API --> Client: 204
+note over API, PG: Any failure aborts the success path and rolls back.
+See transaction.puml for shared error handling.
+@enduml

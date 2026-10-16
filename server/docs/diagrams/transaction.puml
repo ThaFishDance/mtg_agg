@@ -1,0 +1,47 @@
+@startuml
+title Database endpoints - shared request transaction and errors
+hide footbox
+actor Client
+participant "FastAPI / Pydantic" as API
+participant "get_db / transaction" as TX
+database PostgreSQL as PG
+Client -> API: Request
+alt Invalid path, query, or body
+  API --> Client: 422 {detail: ...}
+else Valid input
+  API -> TX: Request database session
+  alt DATABASE_URL not configured
+    TX --> API: HTTPException 503
+    API --> Client: 503 {detail: ...}
+  else Engine configured
+    TX -> TX: Open session and transaction
+    API -> TX: Execute route queries / mutations
+    TX -> PG: SQL (flush may execute writes)
+    alt Route raises HTTPException (404 / 409 / 422)
+      TX -> PG: ROLLBACK
+      TX --> API: Propagate HTTPException
+      API --> Client: Original status {detail: ...}
+    else IntegrityError (including commit failure)
+      TX -> PG: ROLLBACK
+      TX --> API: Sanitized HTTPException 409
+      API --> Client: 409 {detail: ...}
+    else OperationalError (including commit failure)
+      TX -> PG: ROLLBACK
+      TX --> API: Sanitized HTTPException 503
+      API --> Client: 503 {detail: ...}
+    else Route and serialization succeed
+      TX --> API: Route result
+      API -> API: Validate / serialize response
+      API -> TX: Exit function-scoped dependency
+      TX -> PG: COMMIT before sending success
+      API --> Client: 200 / 201 / 204
+    end
+    TX -> TX: Close session
+  end
+end
+note over API, PG
+Only expected error mappings are shown.
+Unexpected exceptions abort the transaction and propagate.
+Health and framework documentation routes do not use get_db.
+end note
+@enduml

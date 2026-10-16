@@ -12,6 +12,8 @@ None.
 
 ## Done
 
+- [x] **TASK-016 — Endpoint PlantUML documentation.** Added 24 endpoint sequence diagrams, an endpoint map, a shared transaction/error flow, and an index with rendering instructions under `docs/diagrams/`. Checked all implemented method/path pairs against route source, diagram block balance, and index links. PlantUML rendering was not performed because PlantUML is not installed locally. Documentation only; runtime tests not rerun.
+
 - [x] **TASK-015 — Commander statistics per pod.** REQ-018. User approved aggregation by main/secondary card pair, excluding missing main cards. GET `/api/v1/pods/{pod_id}/stats/commanders` returns completed appearances, wins, draws, and win rate with bounded pagination and card-pair ordering. Verified 2026-10-16: 26 tests passed against PostgreSQL, including repeated pairs, multiple players using the same pair, reversed pairs, missing/blank main cards, unfinished exclusion, pod isolation, rounding, pagination, empty data, validation, and OpenAPI. No migration or client changes.
 
 - [x] **TASK-014 — Player statistics per pod.** REQ-017. User continued the proposed scope: pod-member identity, completed appearances, wins, draws, and win rate with draws included in the denominator. GET `/api/v1/pods/{pod_id}/stats/players` aggregates in PostgreSQL and returns bounded ID-ordered member statistics, including zero-appearance members. All 23 tests passed on 2026-10-16, covering fixture-derived counts, duplicate names, pod isolation, unfinished exclusion, empty data, pagination, validation, and OpenAPI. Commander/color statistics remain deferred.
