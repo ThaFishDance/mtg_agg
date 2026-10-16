@@ -12,6 +12,8 @@ None.
 
 ## Done
 
+- [x] **TASK-015 — Commander statistics per pod.** REQ-018. User approved aggregation by main/secondary card pair, excluding missing main cards. GET `/api/v1/pods/{pod_id}/stats/commanders` returns completed appearances, wins, draws, and win rate with bounded pagination and card-pair ordering. Verified 2026-10-16: 26 tests passed against PostgreSQL, including repeated pairs, multiple players using the same pair, reversed pairs, missing/blank main cards, unfinished exclusion, pod isolation, rounding, pagination, empty data, validation, and OpenAPI. No migration or client changes.
+
 - [x] **TASK-014 — Player statistics per pod.** REQ-017. User continued the proposed scope: pod-member identity, completed appearances, wins, draws, and win rate with draws included in the denominator. GET `/api/v1/pods/{pod_id}/stats/players` aggregates in PostgreSQL and returns bounded ID-ordered member statistics, including zero-appearance members. All 23 tests passed on 2026-10-16, covering fixture-derived counts, duplicate names, pod isolation, unfinished exclusion, empty data, pagination, validation, and OpenAPI. Commander/color statistics remain deferred.
 
 - [x] **TASK-013 — Completed-game history.** Continued with the proposed scope: optional `completed` filter on GET `/api/v1/games`, combined with existing pod filter, pagination, and ascending ID ordering. Game responses embed the nullable result. Verified 2026-10-16: all 20 tests pass against PostgreSQL, covering wins, draws, unfinished games, combined filters, pagination, invalid query values, and OpenAPI. No migration or client changes.

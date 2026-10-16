@@ -145,3 +145,18 @@ class PlayerStatsPage(BaseModel):
     items: list[PlayerStats]
     limit: int
     offset: int
+
+
+class CommanderStats(BaseModel):
+    main_card: str
+    secondary_card: str | None
+    appearances: int
+    wins: int
+    draws: int
+    win_rate: Annotated[float, Field(ge=0, le=100)]
+
+
+class CommanderStatsPage(BaseModel):
+    items: list[CommanderStats]
+    limit: int
+    offset: int

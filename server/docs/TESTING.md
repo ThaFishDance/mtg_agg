@@ -10,6 +10,8 @@ Game-history verification on **2026-10-16**: **20 tests passed without warnings*
 
 Player-statistics verification on **2026-10-16**: **23 tests passed without warnings** against PostgreSQL. Fixtures verify wins, draws, losses, zero appearances, unfinished exclusion, duplicate names, registered-user deletion, cross-pod isolation, percentage rounding, empty pods, pagination, invalid IDs/bounds, and OpenAPI.
 
+Commander-statistics verification on **2026-10-16**: **26 tests passed without warnings** against PostgreSQL. Fixtures cover repeated pairs, multiple players using the same pair in a game, wins/draws/losses, main/secondary ordering, case-sensitive grouping, absent/blank main exclusion, unfinished exclusion, pod isolation, percentage rounding, empty data, pagination, invalid IDs/bounds, and OpenAPI.
+
 ## Proposed test layers
 
 - Unit: pytest `test_*.py`, focused business rules for completion, colors, inventory bounds, and statistics. No real network or database.

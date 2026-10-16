@@ -374,3 +374,51 @@ def test_player_statistics_empty_and_validation(client):
     assert client.get("/api/v1/pods/0/stats/players").status_code == 422
     for query in ["limit=0", "limit=101", "offset=-1"]:
         assert client.get(path + "?" + query).status_code == 422
+
+
+def test_commander_statistics_grouping_and_counts(client):
+    row = pod(client, [{"temporary_name": str(i)} for i in range(4)])
+    path = f"/api/v1/pods/{row['pod_id']}/stats/commanders"
+
+    def play(pairs, winner, pod_row=row):
+        response = client.post("/api/v1/games", json={
+            "pod_id": pod_row["pod_id"], "players": [
+                {"pod_member_id": member["pod_member_id"], "main_card": main, "secondary_card": secondary}
+                for member, (main, secondary) in zip(pod_row["members"], pairs)
+            ],
+        })
+        assert response.status_code == 201
+        game = response.json()
+        if winner != "unfinished":
+            winner_id = None if winner is None else game["players"][winner]["pod_game_player_id"]
+            assert client.post(f"/api/v1/games/{game['game_id']}/result", json={"player_winner": winner_id}).status_code == 201
+
+    # Two players using the same commander count as two appearances, with one win.
+    play([("A", None), ("A", None), ("A", "B"), (None, "B")], 0)
+    play([("A", None), ("A", "B"), ("B", "A"), (" ", None)], None)
+    play([("A", "B"), ("B", "A"), ("a", None), ("A", "C")], 0)
+    play([("Only unfinished", None)], "unfinished")
+    foreign = pod(client, [{"temporary_name": "Foreign"}])
+    play([("A", None)], 0, foreign)
+    expected = [
+        {"main_card": "A", "secondary_card": None, "appearances": 3, "wins": 1, "draws": 1, "win_rate": 33.33},
+        {"main_card": "A", "secondary_card": "B", "appearances": 3, "wins": 1, "draws": 1, "win_rate": 33.33},
+        {"main_card": "A", "secondary_card": "C", "appearances": 1, "wins": 0, "draws": 0, "win_rate": 0.0},
+        {"main_card": "B", "secondary_card": "A", "appearances": 2, "wins": 0, "draws": 1, "win_rate": 0.0},
+        {"main_card": "a", "secondary_card": None, "appearances": 1, "wins": 0, "draws": 0, "win_rate": 0.0},
+    ]
+    response = client.get(path)
+    assert response.status_code == 200
+    assert response.json() == {"items": expected, "limit": 50, "offset": 0}
+    assert client.get(path + "?limit=2&offset=1").json() == {"items": expected[1:3], "limit": 2, "offset": 1}
+    assert client.get(path + "?offset=5").json()["items"] == []
+
+
+def test_commander_statistics_empty_and_validation(client):
+    row = pod(client, [])
+    path = f"/api/v1/pods/{row['pod_id']}/stats/commanders"
+    assert client.get(path).json() == {"items": [], "limit": 50, "offset": 0}
+    assert client.get("/api/v1/pods/999999/stats/commanders").status_code == 404
+    assert client.get("/api/v1/pods/0/stats/commanders").status_code == 422
+    for query in ["limit=0", "limit=101", "offset=-1"]:
+        assert client.get(path + "?" + query).status_code == 422

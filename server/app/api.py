@@ -133,6 +133,31 @@ def player_stats(pod_id: ResourceId, db: DB, limit: Limit = 50, offset: Offset =
     return {"items": items, "limit": limit, "offset": offset}
 
 
+@router.get("/pods/{pod_id}/stats/commanders", response_model=schemas.CommanderStatsPage, tags=["pods"])
+def commander_stats(pod_id: ResourceId, db: DB, limit: Limit = 50, offset: Offset = 0) -> dict:
+    find(db, models.Pod, pod_id)
+    player, game, result = models.GamePlayer, models.Game, models.GameResult
+    query = (
+        select(
+            player.main_card, player.secondary_card,
+            func.count().label("appearances"),
+            func.count().filter(result.player_winner == player.pod_game_player_id).label("wins"),
+            func.count().filter(result.player_winner.is_(None)).label("draws"),
+        )
+        .join(game, game.game_id == player.game_id)
+        .join(result, result.game_id == game.game_id)
+        .where(game.pod_id == pod_id, player.main_card.is_not(None), func.trim(player.main_card) != "")
+        .group_by(player.main_card, player.secondary_card)
+        .order_by(player.main_card, player.secondary_card.nulls_first())
+        .limit(limit).offset(offset)
+    )
+    items = [
+        {**row, "win_rate": round(100 * row["wins"] / row["appearances"], 2)}
+        for row in db.execute(query).mappings()
+    ]
+    return {"items": items, "limit": limit, "offset": offset}
+
+
 @router.put("/pods/{pod_id}", response_model=schemas.Pod, tags=["pods"])
 def replace_pod(pod_id: ResourceId, body: schemas.PodInput, db: DB) -> models.Pod:
     row = db.scalar(select(models.Pod).where(models.Pod.pod_id == pod_id).with_for_update())

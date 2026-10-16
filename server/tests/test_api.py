@@ -70,3 +70,14 @@ def test_openapi_documents_player_statistics() -> None:
     stats = schema["components"]["schemas"]["PlayerStats"]
     assert set(stats["required"]) == {"pod_member_id", "games_played", "wins", "draws", "win_rate"}
     assert stats["properties"]["win_rate"]["maximum"] == 100
+
+
+def test_openapi_documents_commander_statistics() -> None:
+    schema = create_app().openapi()
+    operation = schema["paths"]["/api/v1/pods/{pod_id}/stats/commanders"]["get"]
+    assert operation["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/CommanderStatsPage",
+    }
+    stats = schema["components"]["schemas"]["CommanderStats"]
+    assert set(stats["required"]) == {"main_card", "secondary_card", "appearances", "wins", "draws", "win_rate"}
+    assert stats["properties"]["win_rate"]["maximum"] == 100

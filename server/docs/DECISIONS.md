@@ -80,6 +80,13 @@
 - Decision: GET `/api/v1/pods/{pod_id}/stats/players` counts completed appearances, wins, and draws by pod-member ID. Win rate is wins divided by completed appearances (including draws), expressed as a percentage rounded to two decimals; zero appearances yields 0. Include all current members, ordered by member ID, with standard bounded pagination.
 - Consequences: Names do not merge identities. SQL aggregates only games with results in the requested pod; an outer join includes members with zero counts. No new dependencies or migrations. Existing unauthenticated access policy applies. Commander/color statistics and cross-pod user aggregation remain deferred.
 
+## ADR-011 — Commander statistics per pod
+
+- Date: 2026-10-16
+- Status: Accepted by user
+- Decision: GET `/api/v1/pods/{pod_id}/stats/commanders` groups completed player appearances by the stored main/secondary card pair, excluding null/blank main cards. Each player appearance counts separately; draws count toward both appearances and draws. Win rate is the percentage of appearances won, rounded to two decimals.
+- Consequences: Exact case-sensitive strings and main/secondary order define identity; no external card lookup or canonicalization. Standard list bounds apply after SQL grouping, ordered by main card then secondary (null first). Empty pods return empty lists; missing pods return 404. No migration, dependencies, client, or authentication changes. Color statistics remain deferred.
+
 ## Future decision template
 
 ID, date, status (Proposed/Accepted/Superseded), decision, context, alternatives, consequences, and links to affected documents. Record auth, runtime, contract, migration, and deployment choices when resolved. See [architecture](ARCHITECTURE.md).
