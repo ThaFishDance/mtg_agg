@@ -131,3 +131,17 @@ class GamePage(BaseModel):
     items: list[Game]
     limit: int
     offset: int
+
+
+class PlayerStats(BaseModel):
+    pod_member_id: int
+    games_played: int
+    wins: int
+    draws: int
+    win_rate: Annotated[float, Field(ge=0, le=100)]
+
+
+class PlayerStatsPage(BaseModel):
+    items: list[PlayerStats]
+    limit: int
+    offset: int

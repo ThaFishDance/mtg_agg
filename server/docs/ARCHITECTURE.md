@@ -35,7 +35,7 @@ Create modules when a task needs them; do not scaffold empty domain layers. SQLA
 
 HTTP → router/Pydantic validation → identity dependency for protected routes → domain function where needed → database query or external adapter → explicit response schema. Translate expected domain errors at the HTTP boundary. For simple reads, a route may call a focused persistence function directly.
 
-Game creation/completion and bulk import use database transactions. Owner constraints belong in queries, including nested deck-card operations. Proposed statistics aggregate completed data at the database boundary rather than loading unbounded history into application memory.
+Game creation/completion and bulk import use database transactions. Owner constraints belong in queries, including nested deck-card operations. Player statistics aggregate completed appearances, wins, and draws in PostgreSQL, scoped to the game pod and grouped by pod-member ID. An outer join to pod members includes zero-appearance members; pagination and member-ID ordering apply to the aggregated rows. Win-rate calculation operates only on the returned page. No history is loaded into application memory.
 
 ## Storage and lifecycle
 

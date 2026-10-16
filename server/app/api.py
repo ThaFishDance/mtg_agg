@@ -1,7 +1,7 @@
 from typing import Annotated, TypeVar
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app import models, schemas
@@ -96,6 +96,41 @@ def list_pods(db: DB, limit: Limit = 50, offset: Offset = 0) -> dict:
 @router.get("/pods/{pod_id}", response_model=schemas.Pod, tags=["pods"])
 def get_pod(pod_id: ResourceId, db: DB) -> models.Pod:
     return find(db, models.Pod, pod_id)
+
+
+@router.get("/pods/{pod_id}/stats/players", response_model=schemas.PlayerStatsPage, tags=["pods"])
+def player_stats(pod_id: ResourceId, db: DB, limit: Limit = 50, offset: Offset = 0) -> dict:
+    find(db, models.Pod, pod_id)
+    player, game, result = models.GamePlayer, models.Game, models.GameResult
+    totals = (
+        select(
+            player.pod_member_id,
+            func.count().label("games_played"),
+            func.count().filter(result.player_winner == player.pod_game_player_id).label("wins"),
+            func.count().filter(result.player_winner.is_(None)).label("draws"),
+        )
+        .join(game, game.game_id == player.game_id)
+        .join(result, result.game_id == game.game_id)
+        .where(game.pod_id == pod_id)
+        .group_by(player.pod_member_id)
+        .subquery()
+    )
+    query = (
+        select(
+            models.PodMember.pod_member_id,
+            func.coalesce(totals.c.games_played, 0).label("games_played"),
+            func.coalesce(totals.c.wins, 0).label("wins"),
+            func.coalesce(totals.c.draws, 0).label("draws"),
+        )
+        .outerjoin(totals, totals.c.pod_member_id == models.PodMember.pod_member_id)
+        .where(models.PodMember.pod_id == pod_id)
+        .order_by(models.PodMember.pod_member_id)
+        .limit(limit).offset(offset)
+    )
+    items = []
+    for row in db.execute(query).mappings():
+        items.append({**row, "win_rate": round(100 * row["wins"] / row["games_played"], 2) if row["games_played"] else 0.0})
+    return {"items": items, "limit": limit, "offset": offset}
 
 
 @router.put("/pods/{pod_id}", response_model=schemas.Pod, tags=["pods"])

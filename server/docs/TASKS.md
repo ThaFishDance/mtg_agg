@@ -12,6 +12,8 @@ None.
 
 ## Done
 
+- [x] **TASK-014 — Player statistics per pod.** REQ-017. User continued the proposed scope: pod-member identity, completed appearances, wins, draws, and win rate with draws included in the denominator. GET `/api/v1/pods/{pod_id}/stats/players` aggregates in PostgreSQL and returns bounded ID-ordered member statistics, including zero-appearance members. All 23 tests passed on 2026-10-16, covering fixture-derived counts, duplicate names, pod isolation, unfinished exclusion, empty data, pagination, validation, and OpenAPI. Commander/color statistics remain deferred.
+
 - [x] **TASK-013 — Completed-game history.** Continued with the proposed scope: optional `completed` filter on GET `/api/v1/games`, combined with existing pod filter, pagination, and ascending ID ordering. Game responses embed the nullable result. Verified 2026-10-16: all 20 tests pass against PostgreSQL, covering wins, draws, unfinished games, combined filters, pagination, invalid query values, and OpenAPI. No migration or client changes.
 
 - [x] **TASK-012 — Game-result recording and retrieval.** User approved winner by game-player ID, explicit null for draws, identical repeats returning the original result, conflicting repeats returning 409, and player replacement blocked after completion. Implemented POST/GET `/api/v1/games/{game_id}/result` on the existing schema. Verified 2026-10-16: all 18 tests pass against PostgreSQL, including concurrent result submissions, result/player-replacement races, validation, rollback, cascades, and OpenAPI. No schema migration required.

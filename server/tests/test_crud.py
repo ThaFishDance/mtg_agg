@@ -325,3 +325,52 @@ def test_game_history_filters_and_embedded_results(client):
     assert client.get(f"/api/v1/games?completed=false&pod_id={draw['pod_id']}").json()["items"] == []
     assert client.get("/api/v1/games?completed=invalid").status_code == 422
     assert client.get("/api/v1/games?completed=true&limit=101").status_code == 422
+
+
+def test_pod_player_statistics(client):
+    registered = user(client)
+    row = pod(client, [{"user_id": registered["user_id"]}, {"temporary_name": "Same"},
+                       {"temporary_name": "Same"}, {"temporary_name": "No games"}])
+    ids = [member["pod_member_id"] for member in row["members"]]
+    path = f"/api/v1/pods/{row['pod_id']}/stats/players"
+
+    def play(member_ids, winner_index):
+        response = client.post("/api/v1/games", json={"pod_id": row["pod_id"], "players": [
+            {"pod_member_id": member_id} for member_id in member_ids
+        ]})
+        assert response.status_code == 201
+        game = response.json()
+        if winner_index != "unfinished":
+            winner = None if winner_index is None else game["players"][winner_index]["pod_game_player_id"]
+            assert client.post(f"/api/v1/games/{game['game_id']}/result", json={"player_winner": winner}).status_code == 201
+
+    assert all(item["games_played"] == 0 and item["win_rate"] == 0 for item in client.get(path).json()["items"])
+    play(ids[:3], 0)
+    play(ids[:2], 1)
+    play(ids[:3], None)
+    play(ids, "unfinished")
+    # Another pod's completed game must not affect these totals.
+    foreign = result_game(client)
+    assert client.post(f"/api/v1/games/{foreign['game_id']}/result", json={"player_winner": None}).status_code == 201
+    expected = [
+        {"pod_member_id": ids[0], "games_played": 3, "wins": 1, "draws": 1, "win_rate": 33.33},
+        {"pod_member_id": ids[1], "games_played": 3, "wins": 1, "draws": 1, "win_rate": 33.33},
+        {"pod_member_id": ids[2], "games_played": 2, "wins": 0, "draws": 1, "win_rate": 0.0},
+        {"pod_member_id": ids[3], "games_played": 0, "wins": 0, "draws": 0, "win_rate": 0.0},
+    ]
+    assert client.get(path).json() == {"items": expected, "limit": 50, "offset": 0}
+    assert client.get(path + "?limit=1&offset=1").json() == {"items": expected[1:2], "limit": 1, "offset": 1}
+    assert client.get(path + "?offset=4").json()["items"] == []
+    # Names and registered-user deletion do not change pod-member identity or counts.
+    assert client.delete(f"/api/v1/users/{registered['user_id']}").status_code == 204
+    assert client.get(path).json()["items"] == expected
+
+
+def test_player_statistics_empty_and_validation(client):
+    row = pod(client, [])
+    path = f"/api/v1/pods/{row['pod_id']}/stats/players"
+    assert client.get(path).json() == {"items": [], "limit": 50, "offset": 0}
+    assert client.get("/api/v1/pods/999999/stats/players").status_code == 404
+    assert client.get("/api/v1/pods/0/stats/players").status_code == 422
+    for query in ["limit=0", "limit=101", "offset=-1"]:
+        assert client.get(path + "?" + query).status_code == 422

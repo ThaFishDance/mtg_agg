@@ -59,3 +59,14 @@ def test_openapi_documents_game_history() -> None:
     assert game["properties"]["result"]["anyOf"] == [
         {"$ref": "#/components/schemas/GameResult"}, {"type": "null"},
     ]
+
+
+def test_openapi_documents_player_statistics() -> None:
+    schema = create_app().openapi()
+    operation = schema["paths"]["/api/v1/pods/{pod_id}/stats/players"]["get"]
+    assert operation["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/PlayerStatsPage",
+    }
+    stats = schema["components"]["schemas"]["PlayerStats"]
+    assert set(stats["required"]) == {"pod_member_id", "games_played", "wins", "draws", "win_rate"}
+    assert stats["properties"]["win_rate"]["maximum"] == 100

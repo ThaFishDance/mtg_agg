@@ -73,6 +73,13 @@
 - Decision: Add optional `completed` to GET `/api/v1/games` and include nullable `result` in game responses. Completion means a result exists, including draws. Omission retains the full list. Existing pod filter, bounded pagination, and ascending game-ID ordering remain.
 - Consequences: Filtering uses result existence and combines before pagination. List responses eager-load results and players. Create/update responses share the same game schema and also include `result`. No database migration; timestamp semantics unchanged. Verified with PostgreSQL API tests and OpenAPI assertions.
 
+## ADR-010 — Player statistics per pod
+
+- Date: 2026-10-16
+- Status: Accepted; user continued the proposed player-statistics scope
+- Decision: GET `/api/v1/pods/{pod_id}/stats/players` counts completed appearances, wins, and draws by pod-member ID. Win rate is wins divided by completed appearances (including draws), expressed as a percentage rounded to two decimals; zero appearances yields 0. Include all current members, ordered by member ID, with standard bounded pagination.
+- Consequences: Names do not merge identities. SQL aggregates only games with results in the requested pod; an outer join includes members with zero counts. No new dependencies or migrations. Existing unauthenticated access policy applies. Commander/color statistics and cross-pod user aggregation remain deferred.
+
 ## Future decision template
 
 ID, date, status (Proposed/Accepted/Superseded), decision, context, alternatives, consequences, and links to affected documents. Record auth, runtime, contract, migration, and deployment choices when resolved. See [architecture](ARCHITECTURE.md).

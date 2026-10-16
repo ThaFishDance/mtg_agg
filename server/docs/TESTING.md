@@ -8,6 +8,8 @@ Game-result verification on **2026-10-16**: **18 tests passed without warnings**
 
 Game-history verification on **2026-10-16**: **20 tests passed without warnings** against PostgreSQL. Added coverage for embedded results in game responses, wins/draws versus unfinished games, played timestamps independent of completion, combined pod/completion filters, pagination after filtering, empty pages, invalid boolean values, and generated OpenAPI.
 
+Player-statistics verification on **2026-10-16**: **23 tests passed without warnings** against PostgreSQL. Fixtures verify wins, draws, losses, zero appearances, unfinished exclusion, duplicate names, registered-user deletion, cross-pod isolation, percentage rounding, empty pods, pagination, invalid IDs/bounds, and OpenAPI.
+
 ## Proposed test layers
 
 - Unit: pytest `test_*.py`, focused business rules for completion, colors, inventory bounds, and statistics. No real network or database.

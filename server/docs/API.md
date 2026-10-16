@@ -23,6 +23,8 @@ Creates return 201, reads/updates 200, deletes 204. Missing records return 404; 
 
 Results: POST `/api/v1/games/{game_id}/result` requires `{ "player_winner": <pod_game_player_id> }` or `{ "player_winner": null }` for a draw. Omitting the field is invalid (422). Winner IDs must belong to the game (422 otherwise). A first result returns 201 with `{game_result_id, game_id, player_winner}`; an identical repeat returns the same object with 200, and a conflicting repeat returns 409. GET returns that object, or 404 if the game/result is absent. A result marks completion; no result means unfinished. Concurrent result submissions and player replacement serialize on the game row. Result updates/deletion, automatic timestamp changes are outside this scope. Existing game/pod deletion cascades still apply. All game responses (create/list/detail/update) include `result`: null when unfinished, otherwise `{game_result_id, game_id, player_winner}`. A draw is a non-null result with `player_winner: null`. A played timestamp alone does not determine completion.
 
+Player statistics: GET `/api/v1/pods/{pod_id}/stats/players` returns `{items, limit, offset}`; each item has `pod_member_id`, `games_played`, `wins`, `draws`, and `win_rate`. All current pod members are included, ordered by member ID, with normal list bounds (default 50, maximum 100). Only appearances in games with a result count; each participant in a drawn game gains one draw. Win rate is `100 * wins / games_played`, rounded to two decimals, or 0 for zero appearances. Draws remain in the denominator. Duplicate names are distinct members; registered-user deletion preserves the member statistics. Existing empty pods return an empty page; missing pods return 404; invalid IDs/pagination return 422. This endpoint remains unauthenticated under the accepted initial access policy.
+
 Example sequence:
 
 ```json
@@ -36,7 +38,7 @@ POST /api/v1/games
 {"pod_id": 1, "players": [{"pod_member_id": 1, "main_card": "Sol Ring"}]}
 ```
 
-Use IDs returned by earlier calls; the example IDs are illustrative. `GET /api/v1/health` and `/api/health` return 200 with `{status: "ok", timestamp: "<UTC ISO-8601>"}` without external dependencies. Admin APIs, authentication, and statistics are deferred.
+Use IDs returned by earlier calls; the example IDs are illustrative. `GET /api/v1/health` and `/api/health` return 200 with `{status: "ok", timestamp: "<UTC ISO-8601>"}` without external dependencies. Admin APIs, authentication, and commander/color statistics are deferred.
 
 ## Legacy reference and deferred proposals
 
