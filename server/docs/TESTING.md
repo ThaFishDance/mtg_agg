@@ -12,6 +12,8 @@ Player-statistics verification on **2026-10-16**: **23 tests passed without warn
 
 Commander-statistics verification on **2026-10-16**: **26 tests passed without warnings** against PostgreSQL. Fixtures cover repeated pairs, multiple players using the same pair in a game, wins/draws/losses, main/secondary ordering, case-sensitive grouping, absent/blank main exclusion, unfinished exclusion, pod isolation, percentage rounding, empty data, pagination, invalid IDs/bounds, and OpenAPI.
 
+Color-statistics verification on **2026-10-16**: **29 tests passed without warnings** against PostgreSQL. Fixtures cover case/order/duplicate normalization, explicit colorless, all five colors, invalid/null/blank exclusion, unknown winners, multiple same-identity players, wins/draws, rounding, unfinished exclusion, pod isolation, empty/unknown-only data, stored-value preservation, invalid IDs, and OpenAPI.
+
 ## Proposed test layers
 
 - Unit: pytest `test_*.py`, focused business rules for completion, colors, inventory bounds, and statistics. No real network or database.

@@ -33,13 +33,14 @@ Evidence: [legacy guidance](../../client/CLAUDE.md), [database schema](../../cli
 | REQ-014 | Confirmed | Versioned API, authentication later | `/api/v1`, snake_case contracts and bounded lists; auth is not required for initial routes. |
 | REQ-015 | Confirmed 2026-10-16 | Record/read one result per game | Winner is a game-player ID or explicit null for a draw; identical repeats return the existing result, conflicting repeats return 409; participants cannot be replaced after a result exists. Concurrent writes and rollback verified against PostgreSQL. |
 
-Completed-game filtering and embedded results are accepted under REQ-016. REQ-004's legacy game-completion contract and the remaining REQ-005 statistics (color) and REQ-006–REQ-009 (decks, inventory, Scryfall, auth) are deferred. Per-pod player and commander statistics are accepted under REQ-017 and REQ-018. Pod-admin permission APIs remain deferred; their tables are mapped to preserve schema fidelity. Existing-data retention/cutover remains unresolved and is not required to implement this separate API.
+Completed-game filtering and embedded results are accepted under REQ-016. REQ-004's legacy game-completion contract and REQ-006–REQ-009 (decks, inventory, Scryfall, auth) are deferred. Per-pod color statistics are accepted under REQ-019; other legacy statistics contracts remain reference only. Per-pod player and commander statistics are accepted under REQ-017 and REQ-018. Pod-admin permission APIs remain deferred; their tables are mapped to preserve schema fidelity. Existing-data retention/cutover remains unresolved and is not required to implement this separate API.
 
 | ID | Status | Requirement | Acceptance criteria |
 |---|---|---|---|
 | REQ-016 | Confirmed 2026-10-16 | Completed-game history | Optional completed filter combines with pod filtering and bounded pagination, preserving ID ordering. Results embedded in game responses; wins and draws count as completed, absent results as unfinished. |
 | REQ-017 | Confirmed 2026-10-16 | Player statistics per pod | Count completed appearances, wins, and draws by pod-member ID. Win rate is wins divided by completed appearances, including draws, as a percentage rounded to two decimals. Include zero-appearance members; bounded pagination and ID ordering. |
 | REQ-018 | Confirmed 2026-10-16 | Commander statistics per pod | Group completed player appearances by stored main/secondary card pair; exclude absent/blank main cards. Count appearances, wins, and draws; percentage win rate includes draws in the denominator. Bounded pagination and deterministic pair ordering. |
+| REQ-019 | Confirmed 2026-10-16 | Color statistics per pod | Count completed player appearances, wins, draws, and percentage win rates for individual colors and exact combinations. Normalize case/order/duplicates of W/U/B/R/G; C is explicit colorless. Exclude null, blank, and invalid values. Draws remain in the denominator. |
 
 ## Business rules (proposed unless stated as legacy evidence)
 

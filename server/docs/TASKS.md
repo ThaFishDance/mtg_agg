@@ -12,6 +12,8 @@ None.
 
 ## Done
 
+- [x] **TASK-017 — Color statistics per pod.** REQ-019. User approved individual-color and exact-combination statistics with W/U/B/R/G normalization, explicit C for colorless, and unknown-value exclusion. GET `/api/v1/pods/{pod_id}/stats/colors` counts completed appearances, wins, and draws; percentage win rates include draws in the denominator. Verified 2026-10-16: 29 tests passed against PostgreSQL, including normalization, duplicate symbols, invalid/null/blank values, same-identity players, draws, rounding, pod isolation, unfinished exclusion, empty data, and OpenAPI. Added endpoint diagram and updated map/index. No migration, write-contract, or client changes.
+
 - [x] **TASK-016 — Endpoint PlantUML documentation.** Added 24 endpoint sequence diagrams, an endpoint map, a shared transaction/error flow, and an index with rendering instructions under `docs/diagrams/`. Checked all implemented method/path pairs against route source, diagram block balance, and index links. PlantUML rendering was not performed because PlantUML is not installed locally. Documentation only; runtime tests not rerun.
 
 - [x] **TASK-015 — Commander statistics per pod.** REQ-018. User approved aggregation by main/secondary card pair, excluding missing main cards. GET `/api/v1/pods/{pod_id}/stats/commanders` returns completed appearances, wins, draws, and win rate with bounded pagination and card-pair ordering. Verified 2026-10-16: 26 tests passed against PostgreSQL, including repeated pairs, multiple players using the same pair, reversed pairs, missing/blank main cards, unfinished exclusion, pod isolation, rounding, pagination, empty data, validation, and OpenAPI. No migration or client changes.

@@ -1,7 +1,7 @@
 from typing import Annotated, TypeVar
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app import models, schemas
@@ -156,6 +156,50 @@ def commander_stats(pod_id: ResourceId, db: DB, limit: Limit = 50, offset: Offse
         for row in db.execute(query).mappings()
     ]
     return {"items": items, "limit": limit, "offset": offset}
+
+
+@router.get("/pods/{pod_id}/stats/colors", response_model=schemas.ColorStats, tags=["pods"])
+def color_stats(pod_id: ResourceId, db: DB) -> dict:
+    find(db, models.Pod, pod_id)
+    player, game, result = models.GamePlayer, models.Game, models.GameResult
+    value = func.upper(func.trim(player.color_schema))
+    canonical = case(
+        (value == "C", "C"),
+        (value.op("~")("^[WUBRG]+$"), func.concat(*(
+            case((func.strpos(value, color) > 0, color), else_="") for color in "WUBRG"
+        ))),
+        else_=None,
+    )
+    appearances = (
+        select(canonical.label("color_schema"), player.pod_game_player_id, result.player_winner)
+        .join(game, game.game_id == player.game_id)
+        .join(result, result.game_id == game.game_id)
+        .where(game.pod_id == pod_id)
+        .subquery()
+    )
+    query = (
+        select(
+            appearances.c.color_schema,
+            func.count().label("appearances"),
+            func.count().filter(appearances.c.player_winner == appearances.c.pod_game_player_id).label("wins"),
+            func.count().filter(appearances.c.player_winner.is_(None)).label("draws"),
+        )
+        .where(appearances.c.color_schema.is_not(None))
+        .group_by(appearances.c.color_schema)
+    )
+    # SQL normalization bounds the result to 31 colored identities plus colorless.
+    combinations = [dict(row) for row in db.execute(query).mappings()]
+    combinations.sort(key=lambda row: row["color_schema"])
+    colors = []
+    for color in "WUBRGC":
+        matches = [row for row in combinations if color in row["color_schema"]]
+        if matches:
+            colors.append({"color_schema": color, **{
+                metric: sum(row[metric] for row in matches) for metric in ("appearances", "wins", "draws")
+            }})
+    for row in colors + combinations:
+        row["win_rate"] = round(100 * row["wins"] / row["appearances"], 2)
+    return {"colors": colors, "combinations": combinations}
 
 
 @router.put("/pods/{pod_id}", response_model=schemas.Pod, tags=["pods"])

@@ -4,6 +4,7 @@ One sequence diagram per implemented method/path, plus the endpoint map and shar
 
 - [Endpoint map](endpoints.puml)
 - [Shared transaction and errors](transaction.puml)
+- [GET `/api/v1/pods/{pod_id}/stats/colors`](color_stats.puml)
 
 - [POST `/api/v1/users`](create_user.puml)
 - [GET `/api/v1/users`](list_users.puml)

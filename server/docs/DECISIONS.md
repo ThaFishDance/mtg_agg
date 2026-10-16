@@ -87,6 +87,13 @@
 - Decision: GET `/api/v1/pods/{pod_id}/stats/commanders` groups completed player appearances by the stored main/secondary card pair, excluding null/blank main cards. Each player appearance counts separately; draws count toward both appearances and draws. Win rate is the percentage of appearances won, rounded to two decimals.
 - Consequences: Exact case-sensitive strings and main/secondary order define identity; no external card lookup or canonicalization. Standard list bounds apply after SQL grouping, ordered by main card then secondary (null first). Empty pods return empty lists; missing pods return 404. No migration, dependencies, client, or authentication changes. Color statistics remain deferred.
 
+## ADR-012 — Color statistics per pod
+
+- Date: 2026-10-16
+- Status: Accepted by user
+- Decision: GET `/api/v1/pods/{pod_id}/stats/colors` reports both individual colors and exact combinations. Normalize W/U/B/R/G strings by case, symbol order, and duplicates; explicit C means colorless. Null, blank, invalid strings, and C mixed with colored symbols are unknown and excluded. Only completed player appearances count; wins and draws follow the existing statistics semantics, with draws included in percentage win-rate denominators.
+- Consequences: Read-time SQL normalization leaves stored values and write validation unchanged. Canonical combinations use WUBRG order. Response has observed `colors` in W/U/B/R/G/C order and observed `combinations` in lexicographic canonical-string order; each row uses `color_schema` as its identity. At most six colors and 32 combinations, so no pagination. Empty data returns empty lists. Existing unauthenticated access policy applies. No schema migration or dependencies.
+
 ## Future decision template
 
 ID, date, status (Proposed/Accepted/Superseded), decision, context, alternatives, consequences, and links to affected documents. Record auth, runtime, contract, migration, and deployment choices when resolved. See [architecture](ARCHITECTURE.md).

@@ -160,3 +160,16 @@ class CommanderStatsPage(BaseModel):
     items: list[CommanderStats]
     limit: int
     offset: int
+
+
+class ColorStatsItem(BaseModel):
+    color_schema: str
+    appearances: int
+    wins: int
+    draws: int
+    win_rate: Annotated[float, Field(ge=0, le=100)]
+
+
+class ColorStats(BaseModel):
+    colors: list[ColorStatsItem]
+    combinations: list[ColorStatsItem]

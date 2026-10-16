@@ -37,6 +37,8 @@ HTTP → router/Pydantic validation → identity dependency for protected routes
 
 Game creation/completion and bulk import use database transactions. Owner constraints belong in queries, including nested deck-card operations. Player statistics aggregate completed appearances, wins, and draws in PostgreSQL, scoped to the game pod and grouped by pod-member ID. An outer join to pod members includes zero-appearance members; pagination and member-ID ordering apply to the aggregated rows. Win-rate calculation operates only on the returned page. No history is loaded into application memory. Commander statistics similarly aggregate completed player appearances in SQL, grouping exact main/secondary card values and excluding null/blank main cards. Card-pair ordering and pagination apply after grouping, with win rates calculated only for the returned page.
 
+Color statistics normalize identities in PostgreSQL using an uppercase/trim expression and a W/U/B/R/G-only validity check (or explicit C), then group completed appearances by canonical identity. This bounds the fetched aggregate to 32 rows. Python rolls these aggregates into individual colors and calculates rates; no game history is loaded into memory. Stored values and write contracts are unchanged.
+
 ## Storage and lifecycle
 
 PostgreSQL is selected by the supplied migration, with SQLAlchemy ORM and Psycopg. The new schema contains `app_user`, `pod`, `pod_member`, `pod_user_admin`, `game`, `pod_game_player`, and `game_result`. The SQL file remains the schema source; `app.migrate` applies versioned SQL explicitly with a transactional checksum ledger. There is no startup schema creation, legacy data conversion, or automatic baseline adoption. Existing-data mapping and production cutover remain deferred.

@@ -1,0 +1,29 @@
+@startuml
+title GET /api/v1/pods/{pod_id}/stats/colors
+hide footbox
+actor Client
+participant "FastAPI / Pydantic" as API
+participant "SQLAlchemy session" as DB
+database PostgreSQL as PG
+Client -> API: GET /api/v1/pods/{pod_id}/stats/colors
+API -> API: Validate positive pod_id
+API -> DB: get_db(): request transaction
+DB -> PG: Find pod; missing -> 404
+DB -> PG: Join players, games and results scoped to pod
+DB -> PG: Normalize case/order/duplicates of WUBRG; explicit C = colorless
+DB -> PG: Exclude null/blank/invalid identities
+DB -> PG: Group canonical identities; count appearances, wins and draws
+PG --> DB: At most 32 combination aggregates
+DB --> API: Aggregate rows
+API -> API: Sort combinations; roll up individual color counts
+API -> API: win_rate = round(100 * wins / appearances, 2)
+API -> API: Validate / serialize colors and combinations
+API -> DB: Finish successful request
+DB -> PG: COMMIT
+API --> Client: 200 {colors, combinations}
+note over API, PG
+Only observed identities returned; unknown-only data gives empty lists.
+Stored values and write contracts remain unchanged.
+Draws count in the denominator. Shared errors: transaction.puml.
+end note
+@enduml

@@ -29,6 +29,8 @@ Player statistics: GET `/api/v1/pods/{pod_id}/stats/players` returns `{items, li
 
 Commander statistics: GET `/api/v1/pods/{pod_id}/stats/commanders` returns `{items, limit, offset}`. Items contain `main_card`, nullable `secondary_card`, `appearances`, `wins`, `draws`, and `win_rate`. Only player appearances in completed games of this pod count; null or blank main cards are excluded. Each player counts separately, even when several players use the same pair in one game. Pairs use exact stored strings, are case-sensitive, and retain main/secondary order; no card resolution or pair canonicalization occurs. Results sort by main card then secondary card (ascending database text ordering, null secondary first), before standard bounded pagination. Win rate is `100 * wins / appearances`, rounded to two decimals, including draws in the denominator. Empty/no-qualifying pods return an empty page; missing pods return 404 and invalid IDs/pagination return 422. Access remains unauthenticated.
 
+Color statistics: GET `/api/v1/pods/{pod_id}/stats/colors` returns `{colors, combinations}`. Each row has `color_schema`, `appearances`, `wins`, `draws`, and `win_rate`. Completed player appearances only; multiple players with the same identity count separately. Read-time normalization trims outer spaces, uppercases W/U/B/R/G strings, removes duplicate symbols, and orders symbols as WUBRG (`uww` becomes `WU`). `C`/`c` means colorless; C mixed with colored symbols, separators, internal spaces, null, blank, and all other invalid strings are unknown and excluded. Existing stored values and write validation are unchanged. Combination counts contribute once to each constituent color; C contributes only to colorless. Draws remain in the denominator; win rate is `100 * wins / appearances`, rounded to two decimals. Only observed colors/combinations are returned: individual colors in W/U/B/R/G/C order, combinations sorted lexicographically by canonical string. No pagination is needed: at most six color rows and 32 combinations. Empty/unknown-only pods return two empty lists. Missing pods return 404; invalid IDs return 422. Access remains unauthenticated.
+
 Example sequence:
 
 ```json
@@ -42,7 +44,7 @@ POST /api/v1/games
 {"pod_id": 1, "players": [{"pod_member_id": 1, "main_card": "Sol Ring"}]}
 ```
 
-Use IDs returned by earlier calls; the example IDs are illustrative. `GET /api/v1/health` and `/api/health` return 200 with `{status: "ok", timestamp: "<UTC ISO-8601>"}` without external dependencies. Admin APIs, authentication, and color statistics are deferred.
+Use IDs returned by earlier calls; the example IDs are illustrative. `GET /api/v1/health` and `/api/health` return 200 with `{status: "ok", timestamp: "<UTC ISO-8601>"}` without external dependencies. Admin APIs and authentication are deferred.
 
 ## Legacy reference and deferred proposals
 

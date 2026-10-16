@@ -422,3 +422,55 @@ def test_commander_statistics_empty_and_validation(client):
     assert client.get("/api/v1/pods/0/stats/commanders").status_code == 422
     for query in ["limit=0", "limit=101", "offset=-1"]:
         assert client.get(path + "?" + query).status_code == 422
+
+
+def test_color_statistics_normalization_and_counts(client):
+    row = pod(client, [{"temporary_name": str(i)} for i in range(5)])
+    path = f"/api/v1/pods/{row['pod_id']}/stats/colors"
+
+    def play(values, winner, pod_row=row):
+        response = client.post("/api/v1/games", json={"pod_id": pod_row["pod_id"], "players": [
+            {"pod_member_id": member["pod_member_id"], "color_schema": value}
+            for member, value in zip(pod_row["members"], values)
+        ]})
+        assert response.status_code == 201
+        game = response.json()
+        if winner != "unfinished":
+            winner_id = None if winner is None else game["players"][winner]["pod_game_player_id"]
+            assert client.post(f"/api/v1/games/{game['game_id']}/result", json={"player_winner": winner_id}).status_code == 201
+        return game
+
+    game = play(["wuuw", "UW", "c", None, "W,X"], 0)
+    play(["uW", " C ", "grbuw", "", "CW"], None)
+    play(["G", "W U", "WU", None, "U"], "unfinished")
+    play(["unknown", "W,U", "W U", "[]", "123"], 0)
+    foreign = pod(client, [{"temporary_name": "Other pod"}])
+    play(["W"], 0, foreign)
+
+    def item(identity, count, wins, draws, rate):
+        return {"color_schema": identity, "appearances": count, "wins": wins, "draws": draws, "win_rate": rate}
+
+    expected = {
+        "colors": [item("W", 4, 1, 2, 25.0), item("U", 4, 1, 2, 25.0),
+                   item("B", 1, 0, 1, 0.0), item("R", 1, 0, 1, 0.0),
+                   item("G", 1, 0, 1, 0.0), item("C", 2, 0, 1, 0.0)],
+        "combinations": [item("C", 2, 0, 1, 0.0), item("WU", 3, 1, 1, 33.33), item("WUBRG", 1, 0, 1, 0.0)],
+    }
+    response = client.get(path)
+    assert response.status_code == 200
+    assert response.json() == expected
+    # Statistics normalize on read; stored API input is retained.
+    assert client.get(f"/api/v1/games/{game['game_id']}").json()["players"][0]["color_schema"] == "wuuw"
+
+
+def test_color_statistics_empty_unknown_and_validation(client):
+    game = result_game(client)
+    path = f"/api/v1/pods/{game['pod_id']}/stats/colors"
+    assert client.get(path).json() == {"colors": [], "combinations": []}
+    assert client.post(f"/api/v1/games/{game['game_id']}/result", json={"player_winner": None}).status_code == 201
+    # Null identities in completed games are unknown, not colorless.
+    assert client.get(path).json() == {"colors": [], "combinations": []}
+    empty = pod(client, [])
+    assert client.get(f"/api/v1/pods/{empty['pod_id']}/stats/colors").json() == {"colors": [], "combinations": []}
+    assert client.get("/api/v1/pods/999999/stats/colors").status_code == 404
+    assert client.get("/api/v1/pods/0/stats/colors").status_code == 422

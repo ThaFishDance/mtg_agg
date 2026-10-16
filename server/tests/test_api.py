@@ -81,3 +81,15 @@ def test_openapi_documents_commander_statistics() -> None:
     stats = schema["components"]["schemas"]["CommanderStats"]
     assert set(stats["required"]) == {"main_card", "secondary_card", "appearances", "wins", "draws", "win_rate"}
     assert stats["properties"]["win_rate"]["maximum"] == 100
+
+
+def test_openapi_documents_color_statistics() -> None:
+    schema = create_app().openapi()
+    operation = schema["paths"]["/api/v1/pods/{pod_id}/stats/colors"]["get"]
+    assert operation["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/ColorStats",
+    }
+    assert schema["components"]["schemas"]["ColorStats"]["required"] == ["colors", "combinations"]
+    assert set(schema["components"]["schemas"]["ColorStatsItem"]["required"]) == {
+        "color_schema", "appearances", "wins", "draws", "win_rate",
+    }
