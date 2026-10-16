@@ -6,6 +6,8 @@ Accepted direction: a separate FastAPI service under `server/`; frontend work is
 
 The initial domain scope is users, pods, and games under `/api/v1`, with authentication deferred. `app/models.py` maps all seven tables in the user-supplied migration using SQLAlchemy ORM. `app/schemas.py` defines typed contracts, `app/api.py` implements CRUD, and `app/db.py` provides pooled engines and a transaction per request. Synchronous routes run blocking ORM operations outside the event loop. The dependency uses function scope so commit/rollback completes before a successful response is sent. Engines are disposed during application shutdown. See SQLAlchemy's [session transaction guidance](https://docs.sqlalchemy.org/en/20/orm/session_basics.html).
 
+Game results use the existing `game_result` table with POST/GET `/api/v1/games/{game_id}/result`. Both result creation and participant replacement lock the game row for the transaction, serializing competing writes. Null winners represent draws; existing results prevent any participant replacement. Identical submissions return the existing result; conflicting submissions return 409. No schema changes were needed.
+
 ## Proposed layout
 
 ```text

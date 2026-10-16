@@ -35,3 +35,13 @@ def test_openapi_documents_health_response() -> None:
     assert set(health["required"]) == {"status", "timestamp"}
     assert health["properties"]["status"]["const"] == "ok"
     assert health["properties"]["timestamp"]["format"] == "date-time"
+
+
+def test_openapi_documents_results_contract() -> None:
+    schema = create_app().openapi()
+    route = schema["paths"]["/api/v1/games/{game_id}/result"]
+    assert set(route) == {"get", "post"}
+    assert {"200", "201"} <= route["post"]["responses"].keys()
+    body = schema["components"]["schemas"]["GameResultInput"]
+    assert body["required"] == ["player_winner"]
+    assert {part["type"] for part in body["properties"]["player_winner"]["anyOf"]} == {"integer", "null"}

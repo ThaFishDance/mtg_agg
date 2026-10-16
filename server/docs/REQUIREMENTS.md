@@ -31,8 +31,9 @@ Evidence: [legacy guidance](../../client/CLAUDE.md), [database schema](../../cli
 | REQ-012 | Confirmed | Game CRUD | Pod association, optional played timestamp and players, exact same-pod participant checks, duplicate prevention, atomic updates, and documented deletion cascades. |
 | REQ-013 | Confirmed | SQLAlchemy ORM / PostgreSQL / supplied SQL schema | ORM mapping and CRUD verified against the supplied migration on disposable PostgreSQL; explicit migration command with no production changes. |
 | REQ-014 | Confirmed | Versioned API, authentication later | `/api/v1`, snake_case contracts and bounded lists; auth is not required for initial routes. |
+| REQ-015 | Confirmed 2026-10-16 | Record/read one result per game | Winner is a game-player ID or explicit null for a draw; identical repeats return the existing result, conflicting repeats return 409; participants cannot be replaced after a result exists. Concurrent writes and rollback verified against PostgreSQL. |
 
-REQ-004's legacy game-completion contract and REQ-005–REQ-009 (statistics, decks, inventory, Scryfall, auth) are deferred. Game results and pod-admin permission APIs are also deferred; their tables are mapped to preserve schema fidelity. Existing-data retention/cutover remains unresolved and is not required to implement this separate API.
+REQ-004's legacy game-completion contract and REQ-005–REQ-009 (statistics, decks, inventory, Scryfall, auth) are deferred. Pod-admin permission APIs remain deferred; their tables are mapped to preserve schema fidelity. Existing-data retention/cutover remains unresolved and is not required to implement this separate API.
 
 ## Business rules (proposed unless stated as legacy evidence)
 
@@ -50,6 +51,6 @@ Never expose credentials or internal exception details. Enforce ownership in per
 
 Confirmed non-goal: frontend rebuild during this phase. Proposed non-goals: live multiplayer synchronization, persistent turn-by-turn event tracking, trading/payments, automatic price refresh, and full deck legality enforcement. The legacy event model alone does not establish an event API requirement.
 
-Python 3.12, SQLAlchemy ORM, PostgreSQL, users/pods/games CRUD, `/api/v1`, and deferred authentication are confirmed. Auth provider, future permissions, game-result semantics, existing-data conversion, and hosting remain open for later tasks. Never reset a database based on the phrase “from scratch.”
+Python 3.12, SQLAlchemy ORM, PostgreSQL, users/pods/games CRUD, `/api/v1`, and deferred authentication are confirmed. Auth provider, future permissions, broader game-lifecycle semantics, existing-data conversion, and hosting remain open for later tasks. Never reset a database based on the phrase “from scratch.”
 
 See [architecture](ARCHITECTURE.md), [API](API.md), and [tasks](TASKS.md).

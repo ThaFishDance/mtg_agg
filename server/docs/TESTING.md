@@ -4,6 +4,8 @@
 
 The suite covers health/OpenAPI, users/pods/games CRUD, nested member boundaries, input and pagination bounds, PostgreSQL constraint conflicts, deletion cascades, cross-pod participant rejection, transaction rollback, ORM/migration column agreement, and repeatable SQL migration execution. Integration tests apply the actual supplied SQL in isolated schemas and run the production SQLAlchemy transaction dependency. No authentication, client process, or external API is required. PostgreSQL tests skip unless `TEST_DATABASE_URL` is set.
 
+Game-result verification on **2026-10-16**: **18 tests passed without warnings** against PostgreSQL. Coverage includes winner/draw persistence, identical/conflicting repeats, invalid and foreign winners, rollback of combined timestamp/player changes, participant locking after draws and wins, deletion cascades, concurrent identical/conflicting submissions, completion racing participant replacement, and generated OpenAPI result schemas/statuses.
+
 ## Proposed test layers
 
 - Unit: pytest `test_*.py`, focused business rules for completion, colors, inventory bounds, and statistics. No real network or database.

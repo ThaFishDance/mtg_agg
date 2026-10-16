@@ -180,3 +180,115 @@ def test_migration_runner_is_repeatable(monkeypatch):
         finally:
             engine.dispose()
             admin.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
+
+
+def result_game(client):
+    row = pod(client, [{"temporary_name": "One"}, {"temporary_name": "Two"}])
+    response = client.post("/api/v1/games", json={
+        "pod_id": row["pod_id"],
+        "players": [{"pod_member_id": member["pod_member_id"]} for member in row["members"]],
+    })
+    assert response.status_code == 201
+    return response.json()
+
+
+@pytest.mark.parametrize("draw", [False, True])
+def test_result_completion_repeats_and_player_lock(client, draw):
+    game = result_game(client)
+    path = f"/api/v1/games/{game['game_id']}"
+    result_path = path + "/result"
+    assert client.get(result_path).status_code == 404
+    winner = None if draw else game["players"][0]["pod_game_player_id"]
+    response = client.post(result_path, json={"player_winner": winner})
+    assert response.status_code == 201
+    result = response.json()
+    assert result["game_id"] == game["game_id"]
+    assert result["player_winner"] == winner
+    assert client.get(result_path).json() == result
+    repeated = client.post(result_path, json={"player_winner": winner})
+    assert repeated.status_code == 200
+    assert repeated.json() == result
+    other = game["players"][1]["pod_game_player_id"]
+    assert client.post(result_path, json={"player_winner": other}).status_code == 409
+    # Rejected participant changes also roll back timestamp changes, including draws.
+    assert client.patch(path, json={"players": [], "date_played": "2026-10-16T12:00:00Z"}).status_code == 409
+    assert client.get(path).json() == game
+    assert client.patch(path, json={"date_played": "2026-10-16T12:00:00Z"}).status_code == 200
+    assert client.get(result_path).json() == result
+    assert client.delete(path).status_code == 204
+    assert client.get(result_path).status_code == 404
+    from app.models import GameResult
+    from sqlalchemy import select
+    from sqlalchemy.orm import Session
+    with Session(client.app.state.engine) as db:
+        assert db.scalar(select(GameResult).where(GameResult.game_id == game["game_id"])) is None
+
+
+def test_result_validation_and_foreign_winner(client):
+    game = result_game(client)
+    foreign = result_game(client)
+    path = f"/api/v1/games/{game['game_id']}/result"
+    for payload in [{}, {"player_winner": 0}, {"player_winner": -1},
+                    {"player_winner": None, "extra": True},
+                    {"player_winner": foreign["players"][0]["pod_game_player_id"]},
+                    {"player_winner": 999999}]:
+        assert client.post(path, json=payload).status_code == 422
+        assert client.get(path).status_code == 404
+    assert client.post("/api/v1/games/999999/result", json={"player_winner": None}).status_code == 404
+    assert client.post("/api/v1/games/0/result", json={"player_winner": None}).status_code == 422
+    assert client.get("/api/v1/games/0/result").status_code == 422
+
+
+@pytest.mark.parametrize("conflicting", [False, True])
+def test_concurrent_results(client, conflicting):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    game = result_game(client)
+    path = f"/api/v1/games/{game['game_id']}/result"
+    winners = [game["players"][0]["pod_game_player_id"],
+               None if conflicting else game["players"][0]["pod_game_player_id"]]
+    barrier = Barrier(2)
+
+    def submit(winner):
+        barrier.wait(timeout=10)
+        return client.post(path, json={"player_winner": winner})
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        responses = list(executor.map(submit, winners))
+    assert sorted(response.status_code for response in responses) == ([201, 409] if conflicting else [200, 201])
+    created = next(response.json() for response in responses if response.status_code == 201)
+    assert client.get(path).json() == created
+    if not conflicting:
+        assert responses[0].json() == responses[1].json()
+
+
+def test_result_racing_player_replacement(client):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    game = result_game(client)
+    path = f"/api/v1/games/{game['game_id']}"
+    barrier = Barrier(2)
+
+    def complete():
+        barrier.wait(timeout=10)
+        return client.post(path + "/result", json={"player_winner": game["players"][0]["pod_game_player_id"]})
+
+    def replace():
+        barrier.wait(timeout=10)
+        return client.patch(path, json={"players": []})
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        completion = executor.submit(complete)
+        replacement = executor.submit(replace)
+        result, changed = completion.result(), replacement.result()
+    if result.status_code == 201:
+        assert changed.status_code == 409
+        assert client.get(path).json()["players"] == game["players"]
+        assert client.get(path + "/result").json() == result.json()
+    else:
+        assert result.status_code == 422
+        assert changed.status_code == 200
+        assert client.get(path).json()["players"] == []
+        assert client.get(path + "/result").status_code == 404

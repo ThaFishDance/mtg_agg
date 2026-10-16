@@ -121,3 +121,12 @@ class GamePage(BaseModel):
     items: list[Game]
     limit: int
     offset: int
+
+
+class GameResultInput(Input):
+    player_winner: Id | None
+
+
+class GameResult(GameResultInput):
+    game_result_id: int
+    game_id: int

@@ -186,6 +186,8 @@ def patch_game(game_id: ResourceId, body: schemas.GameUpdate, db: DB) -> models.
     if "date_played" in body.model_fields_set:
         row.date_played = body.date_played
     if "players" in body.model_fields_set:
+        if db.scalar(select(models.GameResult).where(models.GameResult.game_id == game_id)) is not None:
+            raise HTTPException(409, "Players cannot be replaced after a result is recorded")
         for player in row.players:
             db.delete(player)
         db.flush()
@@ -200,3 +202,37 @@ def delete_game(game_id: ResourceId, db: DB) -> Response:
     db.delete(find(db, models.Game, game_id))
     db.flush()
     return Response(status_code=204)
+
+
+@router.post("/games/{game_id}/result", response_model=schemas.GameResult, status_code=201,
+             responses={200: {"model": schemas.GameResult, "description": "Identical result already recorded"}}, tags=["games"])
+def record_result(game_id: ResourceId, body: schemas.GameResultInput, response: Response, db: DB) -> models.GameResult:
+    # Serialize completion with player replacement and other completion requests.
+    game = db.scalar(select(models.Game).where(models.Game.game_id == game_id).with_for_update())
+    if game is None:
+        raise HTTPException(404, "Record not found")
+    existing = db.scalar(select(models.GameResult).where(models.GameResult.game_id == game_id))
+    if existing is not None:
+        if existing.player_winner != body.player_winner:
+            raise HTTPException(409, "A different result is already recorded")
+        response.status_code = 200
+        return existing
+    if body.player_winner is not None:
+        winner = db.scalar(select(models.GamePlayer).where(
+            models.GamePlayer.pod_game_player_id == body.player_winner,
+            models.GamePlayer.game_id == game_id,
+        ))
+        if winner is None:
+            raise HTTPException(422, "Winner must be a player in this game")
+    row = models.GameResult(game_id=game_id, player_winner=body.player_winner)
+    db.add(row)
+    db.flush()
+    return row
+
+
+@router.get("/games/{game_id}/result", response_model=schemas.GameResult, tags=["games"])
+def get_result(game_id: ResourceId, db: DB) -> models.GameResult:
+    row = db.scalar(select(models.GameResult).where(models.GameResult.game_id == game_id))
+    if row is None:
+        raise HTTPException(404, "Result not found")
+    return row

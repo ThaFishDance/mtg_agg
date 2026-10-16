@@ -2,7 +2,7 @@
 
 This branch is preparing a fresh FastAPI backend for the existing MTG Commander tracker, deck builder, and inventory application. Frontend work is deferred. The legacy Next.js implementation is in `../client/` and serves as behavior reference.
 
-Current status: `/api/v1` CRUD for users, pods (including members), and games (including players), using SQLAlchemy ORM and PostgreSQL. Authentication is deferred; routes currently permit unauthenticated access. Statistics, decks, inventory, Scryfall, admin permissions, and game-result APIs are deferred. Frontend work remains deferred.
+Current status: `/api/v1` CRUD for users, pods (including members), and games (including players), using SQLAlchemy ORM and PostgreSQL. Authentication is deferred; routes currently permit unauthenticated access. Statistics, decks, inventory, Scryfall, admin permissions, are deferred. Game-result recording and retrieval are implemented. Frontend work remains deferred.
 
 From `server/`, use:
 
@@ -33,7 +33,7 @@ uv run --locked pytest
 docker stop mtg-api-crud-test
 ```
 
-Without `TEST_DATABASE_URL`, PostgreSQL tests are skipped. Verified on 2026-10-16: 11 tests passed without warnings against PostgreSQL 16, including migration execution, rollback, deletion cascades, and nested membership checks. The test client uses HTTPX2; locked dependency installation and documented OpenAPI CRUD paths/methods were also verified.
+Without `TEST_DATABASE_URL`, PostgreSQL tests are skipped. Verified on 2026-10-16: 18 tests passed without warnings against PostgreSQL 16, including migration execution, rollback, deletion cascades, and nested membership checks. The test client uses HTTPX2; locked dependency installation and documented OpenAPI CRUD paths/methods were also verified.
 
 ## Documentation
 

@@ -11,14 +11,17 @@ The accepted API uses `/api/v1` and snake_case JSON. Authentication is deferred;
 | Users | POST `/api/v1/users` | GET `/api/v1/users`, GET `/api/v1/users/{user_id}` | PATCH `/api/v1/users/{user_id}` | DELETE `/api/v1/users/{user_id}` |
 | Pods | POST `/api/v1/pods` | GET `/api/v1/pods`, GET `/api/v1/pods/{pod_id}` | PUT `/api/v1/pods/{pod_id}` | DELETE `/api/v1/pods/{pod_id}` |
 | Members | POST `/api/v1/pods/{pod_id}/members` | Included in pod detail | PUT `/api/v1/pods/{pod_id}/members/{member_id}` | DELETE `/api/v1/pods/{pod_id}/members/{member_id}` |
+| Results | POST `/api/v1/games/{game_id}/result` | GET `/api/v1/games/{game_id}/result` | — | Cascades with game deletion |
 | Games | POST `/api/v1/games` | GET `/api/v1/games`, GET `/api/v1/games/{game_id}` | PATCH `/api/v1/games/{game_id}` | DELETE `/api/v1/games/{game_id}` |
 
 Creates return 201, reads/updates 200, deletes 204. Missing records return 404; database constraint conflicts return 409; invalid input or cross-pod game players return 422; missing database configuration or connectivity returns 503. Errors currently use FastAPI's `{detail: ...}` format. Unexpected fields are rejected. ID paths require positive integers. Collection responses are `{items, limit, offset}`, ordered by ID, with `limit` default 50 / maximum 100 and `offset` default 0. Game lists optionally filter by `pod_id`.
 
 - User creation requires `first_name`, `last_name`, and `email`. PATCH accepts any nonempty subset of these fields, without null values. Verification/login fields remain server-controlled defaults. Emails must match the documented OpenAPI pattern; uniqueness follows PostgreSQL's existing case-sensitive constraint.
 - Pod creation accepts `members` (default empty, maximum 100), each containing `user_id`, `temporary_name`, or both. Registered users may occur only once per pod. PUT replaces the full membership list, creating new member IDs; members referenced by games prevent replacement with 409. Use nested member routes to edit identities or add members while retaining history. Referenced members cannot be deleted. Nested routes enforce pod/member matching.
-- Game creation requires `pod_id`, optionally `date_played` and `players` (default empty, maximum 100). Each player requires `pod_member_id`, with optional `main_card`, `secondary_card`, and `color_schema`. Members must belong to the game's pod and cannot appear twice. PATCH accepts `date_played` (including explicit null) and/or a full replacement `players` list; changes are atomic. Timestamp inputs require timezone information. A game's pod is immutable. Replacing players regenerates player IDs and is rejected if an existing result references a removed player.
+- Game creation requires `pod_id`, optionally `date_played` and `players` (default empty, maximum 100). Each player requires `pod_member_id`, with optional `main_card`, `secondary_card`, and `color_schema`. Members must belong to the game's pod and cannot appear twice. PATCH accepts `date_played` (including explicit null) and/or a full replacement `players` list; changes are atomic. Timestamp inputs require timezone information. A game's pod is immutable. Replacing players regenerates player IDs and is rejected with 409 whenever a result exists, including a draw. Timestamp-only updates remain allowed.
 - User deletion retains the user's name (up to 100 characters) as a temporary member identity before the SQL `SET NULL` action. Pod deletion cascades through its games and members; game deletion cascades through players and results, following the supplied migration.
+
+Results: POST `/api/v1/games/{game_id}/result` requires `{ "player_winner": <pod_game_player_id> }` or `{ "player_winner": null }` for a draw. Omitting the field is invalid (422). Winner IDs must belong to the game (422 otherwise). A first result returns 201 with `{game_result_id, game_id, player_winner}`; an identical repeat returns the same object with 200, and a conflicting repeat returns 409. GET returns that object, or 404 if the game/result is absent. A result marks completion; no result means unfinished. Concurrent result submissions and player replacement serialize on the game row. Result updates/deletion, completed-only history filters, and automatic timestamp changes are outside this scope. Existing game/pod deletion cascades still apply.
 
 Example sequence:
 
@@ -33,7 +36,7 @@ POST /api/v1/games
 {"pod_id": 1, "players": [{"pod_member_id": 1, "main_card": "Sol Ring"}]}
 ```
 
-Use IDs returned by earlier calls; the example IDs are illustrative. `GET /api/v1/health` and `/api/health` return 200 with `{status: "ok", timestamp: "<UTC ISO-8601>"}` without external dependencies. Game-result and admin APIs, authentication, and statistics are deferred.
+Use IDs returned by earlier calls; the example IDs are illustrative. `GET /api/v1/health` and `/api/health` return 200 with `{status: "ok", timestamp: "<UTC ISO-8601>"}` without external dependencies. Admin APIs, authentication, and statistics are deferred.
 
 ## Legacy reference and deferred proposals
 

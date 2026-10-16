@@ -4,13 +4,15 @@ Accepted initial scope: users, pods/members, and games/players CRUD based on the
 
 ## Next
 
-No additional domain work is active. Game results, pod-admin APIs, authentication, and production/data cutover require future scope decisions.
+No additional domain work is active. Pod-admin APIs, authentication, broader game history/lifecycle features, and production/data cutover require future scope decisions.
 
 ## In progress
 
 None.
 
 ## Done
+
+- [x] **TASK-012 — Game-result recording and retrieval.** User approved winner by game-player ID, explicit null for draws, identical repeats returning the original result, conflicting repeats returning 409, and player replacement blocked after completion. Implemented POST/GET `/api/v1/games/{game_id}/result` on the existing schema. Verified 2026-10-16: all 18 tests pass against PostgreSQL, including concurrent result submissions, result/player-replacement races, validation, rollback, cascades, and OpenAPI. No schema migration required.
 
 - [x] **Initial CRUD final verification and HTTPX2 dependency migration.** Verified 2026-10-16: refreshed stale lockfile metadata, `uv sync --locked` passed, all 11 tests passed against isolated PostgreSQL schemas without warnings, generated OpenAPI CRUD methods match the documented contract, and Starlette's test client uses HTTPX2.
 - [x] **TASK-002 — Resolve initial MVP and contract choices.** User selected users, pods, and games; supplied the PostgreSQL schema; chose SQLAlchemy ORM and `/api/v1`; explicitly deferred authentication and client migration. Contracts use snake_case, ID ordering, and bounded lists. Legacy feature scope, winner/completion policies, auth provider, and production/data cutover are deferred to later tasks.
