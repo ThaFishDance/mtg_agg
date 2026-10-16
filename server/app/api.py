@@ -166,10 +166,14 @@ def create_game(body: schemas.GameCreate, db: DB) -> models.Game:
 
 
 @router.get("/games", response_model=schemas.GamePage, tags=["games"])
-def list_games(db: DB, limit: Limit = 50, offset: Offset = 0, pod_id: Annotated[int | None, Query(gt=0)] = None) -> dict:
-    query = select(models.Game).options(selectinload(models.Game.players)).order_by(models.Game.game_id).limit(limit).offset(offset)
+def list_games(db: DB, limit: Limit = 50, offset: Offset = 0,
+               pod_id: Annotated[int | None, Query(gt=0)] = None,
+               completed: Annotated[bool | None, Query()] = None) -> dict:
+    query = select(models.Game).options(selectinload(models.Game.players), selectinload(models.Game.result)).order_by(models.Game.game_id).limit(limit).offset(offset)
     if pod_id is not None:
         query = query.where(models.Game.pod_id == pod_id)
+    if completed is not None:
+        query = query.where(models.Game.result.has() if completed else ~models.Game.result.has())
     return {"items": db.scalars(query).all(), "limit": limit, "offset": offset}
 
 

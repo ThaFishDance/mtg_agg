@@ -66,6 +66,13 @@
 - Decision: POST/GET `/api/v1/games/{game_id}/result` records/reads one result using the supplied schema. `player_winner` is required and nullable: a game-player ID indicates a winner; null indicates a draw. First creation returns 201, identical retries return the original result with 200, and conflicting retries return 409. Winner must belong to the game.
 - Consequences: Game-row locks serialize result submissions with participant replacement. Any result, including a draw, blocks player replacement. Timestamp-only updates and existing game/pod deletion remain supported. Authentication, result editing/deletion, history filters, and wider lifecycle rules remain deferred. No migration or client changes. Verified by PostgreSQL and OpenAPI tests.
 
+## ADR-009 — Completed-game history
+
+- Date: 2026-10-16
+- Status: Accepted; user requested continuation of the proposed history scope
+- Decision: Add optional `completed` to GET `/api/v1/games` and include nullable `result` in game responses. Completion means a result exists, including draws. Omission retains the full list. Existing pod filter, bounded pagination, and ascending game-ID ordering remain.
+- Consequences: Filtering uses result existence and combines before pagination. List responses eager-load results and players. Create/update responses share the same game schema and also include `result`. No database migration; timestamp semantics unchanged. Verified with PostgreSQL API tests and OpenAPI assertions.
+
 ## Future decision template
 
 ID, date, status (Proposed/Accepted/Superseded), decision, context, alternatives, consequences, and links to affected documents. Record auth, runtime, contract, migration, and deployment choices when resolved. See [architecture](ARCHITECTURE.md).

@@ -33,7 +33,11 @@ Evidence: [legacy guidance](../../client/CLAUDE.md), [database schema](../../cli
 | REQ-014 | Confirmed | Versioned API, authentication later | `/api/v1`, snake_case contracts and bounded lists; auth is not required for initial routes. |
 | REQ-015 | Confirmed 2026-10-16 | Record/read one result per game | Winner is a game-player ID or explicit null for a draw; identical repeats return the existing result, conflicting repeats return 409; participants cannot be replaced after a result exists. Concurrent writes and rollback verified against PostgreSQL. |
 
-REQ-004's legacy game-completion contract and REQ-005–REQ-009 (statistics, decks, inventory, Scryfall, auth) are deferred. Pod-admin permission APIs remain deferred; their tables are mapped to preserve schema fidelity. Existing-data retention/cutover remains unresolved and is not required to implement this separate API.
+Completed-game filtering and embedded results are accepted under REQ-016. REQ-004's legacy game-completion contract and REQ-005–REQ-009 (statistics, decks, inventory, Scryfall, auth) are deferred. Pod-admin permission APIs remain deferred; their tables are mapped to preserve schema fidelity. Existing-data retention/cutover remains unresolved and is not required to implement this separate API.
+
+| ID | Status | Requirement | Acceptance criteria |
+|---|---|---|---|
+| REQ-016 | Confirmed 2026-10-16 | Completed-game history | Optional completed filter combines with pod filtering and bounded pagination, preserving ID ordering. Results embedded in game responses; wins and draws count as completed, absent results as unfinished. |
 
 ## Business rules (proposed unless stated as legacy evidence)
 

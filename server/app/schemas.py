@@ -96,6 +96,15 @@ class GameUpdate(Input):
         return self
 
 
+class GameResultInput(Input):
+    player_winner: Id | None
+
+
+class GameResult(GameResultInput):
+    game_result_id: int
+    game_id: int
+
+
 class Game(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     game_id: int
@@ -103,6 +112,7 @@ class Game(BaseModel):
     date_created: datetime
     date_played: datetime | None
     players: list[Player]
+    result: GameResult | None
 
 
 class UserPage(BaseModel):
@@ -121,12 +131,3 @@ class GamePage(BaseModel):
     items: list[Game]
     limit: int
     offset: int
-
-
-class GameResultInput(Input):
-    player_winner: Id | None
-
-
-class GameResult(GameResultInput):
-    game_result_id: int
-    game_id: int

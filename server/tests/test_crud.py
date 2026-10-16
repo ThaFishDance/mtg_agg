@@ -204,6 +204,7 @@ def test_result_completion_repeats_and_player_lock(client, draw):
     result = response.json()
     assert result["game_id"] == game["game_id"]
     assert result["player_winner"] == winner
+    game["result"] = result
     assert client.get(result_path).json() == result
     repeated = client.post(result_path, json={"player_winner": winner})
     assert repeated.status_code == 200
@@ -292,3 +293,35 @@ def test_result_racing_player_replacement(client):
         assert changed.status_code == 200
         assert client.get(path).json()["players"] == []
         assert client.get(path + "/result").status_code == 404
+
+
+def test_game_history_filters_and_embedded_results(client):
+    assert client.get("/api/v1/games?completed=true").json()["items"] == []
+    unfinished = result_game(client)
+    win = result_game(client)
+    draw = result_game(client)
+    assert all(game["result"] is None for game in [unfinished, win, draw])
+    # A played timestamp alone does not mark completion.
+    assert client.patch(f"/api/v1/games/{unfinished['game_id']}", json={"date_played": "2026-10-16T12:00:00Z"}).status_code == 200
+    for game, winner in [(win, win["players"][0]["pod_game_player_id"]), (draw, None)]:
+        path = f"/api/v1/games/{game['game_id']}"
+        result = client.post(path + "/result", json={"player_winner": winner})
+        assert result.status_code == 201
+        game["result"] = result.json()
+        assert client.get(path).json() == game
+        assert client.patch(path, json={"date_played": None}).json() == game
+
+    completed = client.get("/api/v1/games?completed=true").json()
+    assert completed == {"items": [win, draw], "limit": 50, "offset": 0}
+    assert client.get("/api/v1/games?completed=true&limit=1&offset=1").json() == {
+        "items": [draw], "limit": 1, "offset": 1,
+    }
+    assert client.get("/api/v1/games?completed=true&offset=2").json()["items"] == []
+    active = client.get("/api/v1/games?completed=false").json()["items"]
+    assert [game["game_id"] for game in active] == [unfinished["game_id"]]
+    assert active[0]["result"] is None
+    assert [game["game_id"] for game in client.get("/api/v1/games").json()["items"]] == [unfinished["game_id"], win["game_id"], draw["game_id"]]
+    assert client.get(f"/api/v1/games?completed=true&pod_id={draw['pod_id']}").json()["items"] == [draw]
+    assert client.get(f"/api/v1/games?completed=false&pod_id={draw['pod_id']}").json()["items"] == []
+    assert client.get("/api/v1/games?completed=invalid").status_code == 422
+    assert client.get("/api/v1/games?completed=true&limit=101").status_code == 422

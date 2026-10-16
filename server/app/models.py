@@ -56,6 +56,7 @@ class Game(Base):
     date_created: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp())
     pod_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("pod.pod_id", ondelete="CASCADE"))
     players: Mapped[list["GamePlayer"]] = relationship(order_by="GamePlayer.pod_game_player_id", passive_deletes="all")
+    result: Mapped["GameResult | None"] = relationship(passive_deletes="all")
 
 
 class GamePlayer(Base):

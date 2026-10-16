@@ -20,7 +20,7 @@ Status: initial CRUD scope accepted and implemented. User selected users, pods, 
 
 ## Domain decisions remaining after initial choices
 
-Game-result scope was approved on 2026-10-16: winner by game-player ID, explicit null for draws, identical retries return the existing result, conflicting retries return 409, and all player replacement is blocked once a result exists. This supersedes winner/draw and repeat-result alternatives below for the implemented result API; broader lifecycle features remain deferred. See ADR-008 in [decisions](DECISIONS.md).
+Game-result scope was approved on 2026-10-16: winner by game-player ID, explicit null for draws, identical retries return the existing result, conflicting retries return 409, and all player replacement is blocked once a result exists. This supersedes winner/draw and repeat-result alternatives below for the implemented result API; completed-game filtering and embedded results were subsequently accepted in ADR-009; broader lifecycle features remain deferred. See ADR-008 in [decisions](DECISIONS.md).
 
 | Decision | Concrete alternatives / constraints |
 |---|---|

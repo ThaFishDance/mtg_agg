@@ -45,3 +45,17 @@ def test_openapi_documents_results_contract() -> None:
     body = schema["components"]["schemas"]["GameResultInput"]
     assert body["required"] == ["player_winner"]
     assert {part["type"] for part in body["properties"]["player_winner"]["anyOf"]} == {"integer", "null"}
+
+
+def test_openapi_documents_game_history() -> None:
+    schema = create_app().openapi()
+    parameters = schema["paths"]["/api/v1/games"]["get"]["parameters"]
+    completed = next(parameter for parameter in parameters if parameter["name"] == "completed")
+    assert completed["in"] == "query"
+    assert completed["required"] is False
+    assert {part["type"] for part in completed["schema"]["anyOf"]} == {"boolean", "null"}
+    game = schema["components"]["schemas"]["Game"]
+    assert "result" in game["required"]
+    assert game["properties"]["result"]["anyOf"] == [
+        {"$ref": "#/components/schemas/GameResult"}, {"type": "null"},
+    ]

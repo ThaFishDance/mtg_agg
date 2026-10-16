@@ -4,13 +4,15 @@ Accepted initial scope: users, pods/members, and games/players CRUD based on the
 
 ## Next
 
-No additional domain work is active. Pod-admin APIs, authentication, broader game history/lifecycle features, and production/data cutover require future scope decisions.
+No additional domain work is active. Pod-admin APIs, authentication, broader game lifecycle features, and production/data cutover require future scope decisions.
 
 ## In progress
 
 None.
 
 ## Done
+
+- [x] **TASK-013 — Completed-game history.** Continued with the proposed scope: optional `completed` filter on GET `/api/v1/games`, combined with existing pod filter, pagination, and ascending ID ordering. Game responses embed the nullable result. Verified 2026-10-16: all 20 tests pass against PostgreSQL, covering wins, draws, unfinished games, combined filters, pagination, invalid query values, and OpenAPI. No migration or client changes.
 
 - [x] **TASK-012 — Game-result recording and retrieval.** User approved winner by game-player ID, explicit null for draws, identical repeats returning the original result, conflicting repeats returning 409, and player replacement blocked after completion. Implemented POST/GET `/api/v1/games/{game_id}/result` on the existing schema. Verified 2026-10-16: all 18 tests pass against PostgreSQL, including concurrent result submissions, result/player-replacement races, validation, rollback, cascades, and OpenAPI. No schema migration required.
 
