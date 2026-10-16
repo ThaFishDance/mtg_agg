@@ -33,7 +33,7 @@ uv run --locked pytest
 docker stop mtg-api-crud-test
 ```
 
-Without `TEST_DATABASE_URL`, PostgreSQL tests are skipped. Verified: 11 tests passed against PostgreSQL 16, including migration execution, rollback, deletion cascades, and nested membership checks. One upstream test-client deprecation warning remains.
+Without `TEST_DATABASE_URL`, PostgreSQL tests are skipped. Verified on 2026-10-16: 11 tests passed without warnings against PostgreSQL 16, including migration execution, rollback, deletion cascades, and nested membership checks. The test client uses HTTPX2; locked dependency installation and documented OpenAPI CRUD paths/methods were also verified.
 
 ## Documentation
 

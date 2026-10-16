@@ -33,6 +33,6 @@ uv run --locked uvicorn app.main:create_app --factory --host 127.0.0.1 --port 80
 
 TASK-001 verification: locked installation passed; **2 tests passed**; live health/OpenAPI returned 200 and Uvicorn shut down cleanly.
 
-Initial CRUD verification: **11 tests passed** against isolated PostgreSQL 16 using Python 3.12.14 and SQLAlchemy 2.1.4. Run `uv run --locked pytest` with `TEST_DATABASE_URL` set as shown in [README](../README.md). Without it, database tests skip; this is not a full integration pass. One upstream Starlette warning remains: HTTPX support in its test client is deprecated in favor of HTTPX2. Formatting/lint tooling remains unselected.
+Initial CRUD verification repeated on **2026-10-16**: **11 tests passed without warnings** against isolated PostgreSQL 16 schemas using Python 3.12.14. Refreshed stale dependency metadata in `uv.lock`; `uv sync --locked` passed. Starlette's test client was confirmed to use HTTPX2, and generated OpenAPI CRUD paths and methods match the documented contract. Run `uv run --locked pytest` with `TEST_DATABASE_URL` set as shown in [README](../README.md). Without it, database tests skip; this is not a full integration pass. Formatting/lint tooling remains unselected.
 
 Before a task is done: satisfy its acceptance criteria, run the relevant tests, review generated OpenAPI against [API](API.md), update affected documentation, and report unresolved limits. Broaden testing only when the change warrants it. See [tasks](TASKS.md).

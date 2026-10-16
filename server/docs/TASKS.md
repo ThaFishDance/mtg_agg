@@ -8,10 +8,11 @@ No additional domain work is active. Game results, pod-admin APIs, authenticatio
 
 ## In progress
 
-Initial CRUD final verification and HTTPX2 dependency migration.
+None.
 
 ## Done
 
+- [x] **Initial CRUD final verification and HTTPX2 dependency migration.** Verified 2026-10-16: refreshed stale lockfile metadata, `uv sync --locked` passed, all 11 tests passed against isolated PostgreSQL schemas without warnings, generated OpenAPI CRUD methods match the documented contract, and Starlette's test client uses HTTPX2.
 - [x] **TASK-002 — Resolve initial MVP and contract choices.** User selected users, pods, and games; supplied the PostgreSQL schema; chose SQLAlchemy ORM and `/api/v1`; explicitly deferred authentication and client migration. Contracts use snake_case, ID ordering, and bounded lists. Legacy feature scope, winner/completion policies, auth provider, and production/data cutover are deferred to later tasks.
 - [x] **TASK-003 — Persistence foundation for the initial CRUD API.** SQLAlchemy ORM maps the seven supplied tables with Psycopg as driver. Request-scoped transactions commit before responses and roll back failures. Explicit SQL migrations use a checksum ledger; no schema changes occur on app startup. Actual migration and ORM mappings verified in isolated PostgreSQL schemas. Production/data cutover remains deferred.
 - [x] **TASK-011 — Users, pods, and games CRUD.** Requirements: REQ-010–REQ-014. Typed create/list/read/update/delete routes, nested member updates, same-pod game-player checks, duplicate and foreign-key conflicts, bounded pagination, atomic updates, and deletion cascades verified by PostgreSQL API tests. Auth and frontend changes excluded per user instruction.
