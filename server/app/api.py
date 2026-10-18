@@ -1,11 +1,12 @@
 from typing import Annotated, TypeVar
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response
-from sqlalchemy import case, func, select
+from sqlalchemy import case, delete, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app import models, schemas
 from app.db import get_db
+from app.auth import Actor, OptionalActor, VerifiedSubject, access_pod, private_pod_filter
 
 router = APIRouter(prefix="/api/v1")
 DB = Annotated[Session, Depends(get_db, scope="function")]
@@ -20,6 +21,33 @@ def find(db: Session, model: type[Record], value: int) -> Record:
     if row is None:
         raise HTTPException(404, "Record not found")
     return row
+
+
+def own_user(db: Session, user_id: int, actor: models.User) -> models.User:
+    if user_id != actor.user_id:
+        raise HTTPException(404, "Record not found")
+    return find(db, models.User, user_id)
+
+
+def members_with_owner(members: list[schemas.MemberInput], owner_id: int) -> list[schemas.MemberInput]:
+    if any(member.user_id == owner_id for member in members):
+        return members
+    if len(members) >= 100:
+        raise HTTPException(422, "Pod member limit includes the owner")
+    return [*members, schemas.MemberInput(user_id=owner_id)]
+
+
+def access_game(db: Session, game_id: int, actor: models.User | None, *, write: bool = False) -> models.Game:
+    game = find(db, models.Game, game_id)
+    pod = access_pod(db, game.pod_id, actor, public=True, write=write)
+    db.refresh(game)
+    private = actor is not None and (pod.owner_user_id == actor.user_id or db.scalar(
+        select(models.PodMember.pod_member_id).where(models.PodMember.pod_id == pod.pod_id,
+                                                   models.PodMember.user_id == actor.user_id)
+    ) is not None)
+    if not private and db.scalar(select(models.GameResult.game_result_id).where(models.GameResult.game_id == game_id)) is None:
+        raise HTTPException(404, "Record not found")
+    return game
 
 
 def add_members(db: Session, pod_id: int, members: list[schemas.MemberInput]) -> None:
@@ -37,27 +65,27 @@ def add_players(db: Session, game: models.Game, players: list[schemas.PlayerInpu
 
 
 @router.post("/users", response_model=schemas.User, status_code=201, tags=["users"])
-def create_user(body: schemas.UserCreate, db: DB) -> models.User:
-    row = models.User(**body.model_dump())
+def create_user(body: schemas.UserCreate, db: DB, subject: VerifiedSubject) -> models.User:
+    row = models.User(clerk_user_id=subject, **body.model_dump())
     db.add(row)
     db.flush()
     return row
 
 
 @router.get("/users", response_model=schemas.UserPage, tags=["users"])
-def list_users(db: DB, limit: Limit = 50, offset: Offset = 0) -> dict:
-    rows = db.scalars(select(models.User).order_by(models.User.user_id).limit(limit).offset(offset)).all()
+def list_users(db: DB, actor: Actor, limit: Limit = 50, offset: Offset = 0) -> dict:
+    rows = db.scalars(select(models.User).where(models.User.user_id == actor.user_id).order_by(models.User.user_id).limit(limit).offset(offset)).all()
     return {"items": rows, "limit": limit, "offset": offset}
 
 
 @router.get("/users/{user_id}", response_model=schemas.User, tags=["users"])
-def get_user(user_id: ResourceId, db: DB) -> models.User:
-    return find(db, models.User, user_id)
+def get_user(user_id: ResourceId, db: DB, actor: Actor) -> models.User:
+    return own_user(db, user_id, actor)
 
 
 @router.patch("/users/{user_id}", response_model=schemas.User, tags=["users"])
-def patch_user(user_id: ResourceId, body: schemas.UserUpdate, db: DB) -> models.User:
-    row = find(db, models.User, user_id)
+def patch_user(user_id: ResourceId, body: schemas.UserUpdate, db: DB, actor: Actor) -> models.User:
+    row = own_user(db, user_id, actor)
     for name, value in body.model_dump(exclude_unset=True).items():
         setattr(row, name, value)
     db.flush()
@@ -65,8 +93,10 @@ def patch_user(user_id: ResourceId, body: schemas.UserUpdate, db: DB) -> models.
 
 
 @router.delete("/users/{user_id}", status_code=204, tags=["users"])
-def delete_user(user_id: ResourceId, db: DB) -> Response:
-    row = find(db, models.User, user_id)
+def delete_user(user_id: ResourceId, db: DB, actor: Actor) -> Response:
+    row = own_user(db, user_id, actor)
+    if db.scalar(select(models.Pod.pod_id).where(models.Pod.owner_user_id == user_id)) is not None:
+        raise HTTPException(409, "Delete owned pods before deleting your profile")
     # Retain identity before the supplied migration sets the user reference to NULL.
     members = db.scalars(select(models.PodMember).where(models.PodMember.user_id == user_id).with_for_update()).all()
     for member in members:
@@ -79,28 +109,52 @@ def delete_user(user_id: ResourceId, db: DB) -> Response:
 
 
 @router.post("/pods", response_model=schemas.Pod, status_code=201, tags=["pods"])
-def create_pod(body: schemas.PodInput, db: DB) -> models.Pod:
-    row = models.Pod()
+def create_pod(body: schemas.PodInput, db: DB, actor: Actor) -> models.Pod:
+    row = models.Pod(owner_user_id=actor.user_id)
     db.add(row)
     db.flush()
-    add_members(db, row.pod_id, body.members)
+    add_members(db, row.pod_id, members_with_owner(body.members, actor.user_id))
     return row
 
 
 @router.get("/pods", response_model=schemas.PodPage, tags=["pods"])
-def list_pods(db: DB, limit: Limit = 50, offset: Offset = 0) -> dict:
-    rows = db.scalars(select(models.Pod).options(selectinload(models.Pod.members)).order_by(models.Pod.pod_id).limit(limit).offset(offset)).all()
+def list_pods(db: DB, actor: Actor, limit: Limit = 50, offset: Offset = 0) -> dict:
+    rows = db.scalars(select(models.Pod).where(private_pod_filter(actor)).options(selectinload(models.Pod.members)).order_by(models.Pod.pod_id).limit(limit).offset(offset)).all()
     return {"items": rows, "limit": limit, "offset": offset}
 
 
 @router.get("/pods/{pod_id}", response_model=schemas.Pod, tags=["pods"])
-def get_pod(pod_id: ResourceId, db: DB) -> models.Pod:
-    return find(db, models.Pod, pod_id)
+def get_pod(pod_id: ResourceId, db: DB, actor: Actor) -> models.Pod:
+    return access_pod(db, pod_id, actor)
 
 
-@router.get("/pods/{pod_id}/stats/players", response_model=schemas.PlayerStatsPage, tags=["pods"])
-def player_stats(pod_id: ResourceId, db: DB, limit: Limit = 50, offset: Offset = 0) -> dict:
-    find(db, models.Pod, pod_id)
+@router.patch("/pods/{pod_id}/visibility", response_model=schemas.Pod, tags=["pods"])
+def set_visibility(pod_id: ResourceId, body: schemas.PodVisibility, db: DB, actor: Actor) -> models.Pod:
+    row = access_pod(db, pod_id, actor, write=True, owner_only=True)
+    row.is_public = body.is_public
+    db.flush()
+    return row
+
+
+@router.put("/pods/{pod_id}/admins/{user_id}", response_model=schemas.PodAdmin, tags=["pods"])
+def set_admin(pod_id: ResourceId, user_id: ResourceId, body: schemas.PodAdminInput, db: DB, actor: Actor) -> models.PodAdmin:
+    access_pod(db, pod_id, actor, write=True, owner_only=True)
+    if db.scalar(select(models.PodMember.pod_member_id).where(
+        models.PodMember.pod_id == pod_id, models.PodMember.user_id == user_id,
+    )) is None:
+        raise HTTPException(422, "Admin must be a registered pod member")
+    row = db.get(models.PodAdmin, (pod_id, user_id))
+    if row is None:
+        row = models.PodAdmin(pod_id=pod_id, user_id=user_id)
+        db.add(row)
+    row.is_admin = body.is_admin
+    db.flush()
+    return row
+
+
+@router.get("/pods/{pod_id}/stats/players", response_model=schemas.PlayerStatsPage, openapi_extra={"security": [{"ClerkSession": []}, {}]}, tags=["pods"])
+def player_stats(pod_id: ResourceId, db: DB, actor: OptionalActor, limit: Limit = 50, offset: Offset = 0) -> dict:
+    access_pod(db, pod_id, actor, public=True)
     player, game, result = models.GamePlayer, models.Game, models.GameResult
     totals = (
         select(
@@ -133,9 +187,9 @@ def player_stats(pod_id: ResourceId, db: DB, limit: Limit = 50, offset: Offset =
     return {"items": items, "limit": limit, "offset": offset}
 
 
-@router.get("/pods/{pod_id}/stats/commanders", response_model=schemas.CommanderStatsPage, tags=["pods"])
-def commander_stats(pod_id: ResourceId, db: DB, limit: Limit = 50, offset: Offset = 0) -> dict:
-    find(db, models.Pod, pod_id)
+@router.get("/pods/{pod_id}/stats/commanders", response_model=schemas.CommanderStatsPage, openapi_extra={"security": [{"ClerkSession": []}, {}]}, tags=["pods"])
+def commander_stats(pod_id: ResourceId, db: DB, actor: OptionalActor, limit: Limit = 50, offset: Offset = 0) -> dict:
+    access_pod(db, pod_id, actor, public=True)
     player, game, result = models.GamePlayer, models.Game, models.GameResult
     query = (
         select(
@@ -158,9 +212,9 @@ def commander_stats(pod_id: ResourceId, db: DB, limit: Limit = 50, offset: Offse
     return {"items": items, "limit": limit, "offset": offset}
 
 
-@router.get("/pods/{pod_id}/stats/colors", response_model=schemas.ColorStats, tags=["pods"])
-def color_stats(pod_id: ResourceId, db: DB) -> dict:
-    find(db, models.Pod, pod_id)
+@router.get("/pods/{pod_id}/stats/colors", response_model=schemas.ColorStats, openapi_extra={"security": [{"ClerkSession": []}, {}]}, tags=["pods"])
+def color_stats(pod_id: ResourceId, db: DB, actor: OptionalActor) -> dict:
+    access_pod(db, pod_id, actor, public=True)
     player, game, result = models.GamePlayer, models.Game, models.GameResult
     value = func.upper(func.trim(player.color_schema))
     canonical = case(
@@ -203,21 +257,20 @@ def color_stats(pod_id: ResourceId, db: DB) -> dict:
 
 
 @router.put("/pods/{pod_id}", response_model=schemas.Pod, tags=["pods"])
-def replace_pod(pod_id: ResourceId, body: schemas.PodInput, db: DB) -> models.Pod:
-    row = db.scalar(select(models.Pod).where(models.Pod.pod_id == pod_id).with_for_update())
-    if row is None:
-        raise HTTPException(404, "Record not found")
+def replace_pod(pod_id: ResourceId, body: schemas.PodInput, db: DB, actor: Actor) -> models.Pod:
+    row = access_pod(db, pod_id, actor, write=True)
     for member in row.members:
         db.delete(member)
     db.flush()
-    add_members(db, pod_id, body.members)
+    db.execute(delete(models.PodAdmin).where(models.PodAdmin.pod_id == pod_id))
+    add_members(db, pod_id, members_with_owner(body.members, row.owner_user_id))
     db.expire(row, ["members"])
     return row
 
 
 @router.delete("/pods/{pod_id}", status_code=204, tags=["pods"])
-def delete_pod(pod_id: ResourceId, db: DB) -> Response:
-    row = find(db, models.Pod, pod_id)
+def delete_pod(pod_id: ResourceId, db: DB, actor: Actor) -> Response:
+    row = access_pod(db, pod_id, actor, write=True, owner_only=True)
     # Remove games first so their player references do not block pod-member deletion.
     for game in db.scalars(select(models.Game).where(models.Game.pod_id == pod_id)):
         db.delete(game)
@@ -228,8 +281,8 @@ def delete_pod(pod_id: ResourceId, db: DB) -> Response:
 
 
 @router.post("/pods/{pod_id}/members", response_model=schemas.Member, status_code=201, tags=["pods"])
-def create_member(pod_id: ResourceId, body: schemas.MemberInput, db: DB) -> models.PodMember:
-    find(db, models.Pod, pod_id)
+def create_member(pod_id: ResourceId, body: schemas.MemberInput, db: DB, actor: Actor) -> models.PodMember:
+    access_pod(db, pod_id, actor, write=True)
     row = models.PodMember(pod_id=pod_id, **body.model_dump())
     db.add(row)
     db.flush()
@@ -244,8 +297,13 @@ def find_member(db: Session, pod_id: int, member_id: int) -> models.PodMember:
 
 
 @router.put("/pods/{pod_id}/members/{member_id}", response_model=schemas.Member, tags=["pods"])
-def replace_member(pod_id: ResourceId, member_id: ResourceId, body: schemas.MemberInput, db: DB) -> models.PodMember:
+def replace_member(pod_id: ResourceId, member_id: ResourceId, body: schemas.MemberInput, db: DB, actor: Actor) -> models.PodMember:
+    pod = access_pod(db, pod_id, actor, write=True)
     row = find_member(db, pod_id, member_id)
+    if pod.owner_user_id is not None and row.user_id == pod.owner_user_id and body.user_id != row.user_id:
+        raise HTTPException(409, "Owner membership cannot be removed")
+    if row.user_id is not None and row.user_id != body.user_id:
+        db.execute(delete(models.PodAdmin).where(models.PodAdmin.pod_id == pod_id, models.PodAdmin.user_id == row.user_id))
     for name, value in body.model_dump().items():
         setattr(row, name, value)
     db.flush()
@@ -253,15 +311,21 @@ def replace_member(pod_id: ResourceId, member_id: ResourceId, body: schemas.Memb
 
 
 @router.delete("/pods/{pod_id}/members/{member_id}", status_code=204, tags=["pods"])
-def delete_member(pod_id: ResourceId, member_id: ResourceId, db: DB) -> Response:
-    db.delete(find_member(db, pod_id, member_id))
+def delete_member(pod_id: ResourceId, member_id: ResourceId, db: DB, actor: Actor) -> Response:
+    pod = access_pod(db, pod_id, actor, write=True)
+    row = find_member(db, pod_id, member_id)
+    if pod.owner_user_id is not None and row.user_id == pod.owner_user_id:
+        raise HTTPException(409, "Owner membership cannot be removed")
+    if row.user_id is not None:
+        db.execute(delete(models.PodAdmin).where(models.PodAdmin.pod_id == pod_id, models.PodAdmin.user_id == row.user_id))
+    db.delete(row)
     db.flush()
     return Response(status_code=204)
 
 
 @router.post("/games", response_model=schemas.Game, status_code=201, tags=["games"])
-def create_game(body: schemas.GameCreate, db: DB) -> models.Game:
-    find(db, models.Pod, body.pod_id)
+def create_game(body: schemas.GameCreate, db: DB, actor: Actor) -> models.Game:
+    access_pod(db, body.pod_id, actor, write=True)
     row = models.Game(**body.model_dump(exclude={"players"}))
     db.add(row)
     db.flush()
@@ -269,11 +333,14 @@ def create_game(body: schemas.GameCreate, db: DB) -> models.Game:
     return row
 
 
-@router.get("/games", response_model=schemas.GamePage, tags=["games"])
-def list_games(db: DB, limit: Limit = 50, offset: Offset = 0,
+@router.get("/games", response_model=schemas.GamePage, openapi_extra={"security": [{"ClerkSession": []}, {}]}, tags=["games"])
+def list_games(db: DB, actor: OptionalActor, limit: Limit = 50, offset: Offset = 0,
                pod_id: Annotated[int | None, Query(gt=0)] = None,
                completed: Annotated[bool | None, Query()] = None) -> dict:
     query = select(models.Game).options(selectinload(models.Game.players), selectinload(models.Game.result)).order_by(models.Game.game_id).limit(limit).offset(offset)
+    private = models.Game.pod_id.in_(select(models.Pod.pod_id).where(private_pod_filter(actor))) if actor is not None else False
+    public = models.Game.pod_id.in_(select(models.Pod.pod_id).where(models.Pod.is_public)) & models.Game.result.has()
+    query = query.where(or_(private, public))
     if pod_id is not None:
         query = query.where(models.Game.pod_id == pod_id)
     if completed is not None:
@@ -281,13 +348,14 @@ def list_games(db: DB, limit: Limit = 50, offset: Offset = 0,
     return {"items": db.scalars(query).all(), "limit": limit, "offset": offset}
 
 
-@router.get("/games/{game_id}", response_model=schemas.Game, tags=["games"])
-def get_game(game_id: ResourceId, db: DB) -> models.Game:
-    return find(db, models.Game, game_id)
+@router.get("/games/{game_id}", response_model=schemas.Game, openapi_extra={"security": [{"ClerkSession": []}, {}]}, tags=["games"])
+def get_game(game_id: ResourceId, db: DB, actor: OptionalActor) -> models.Game:
+    return access_game(db, game_id, actor)
 
 
 @router.patch("/games/{game_id}", response_model=schemas.Game, tags=["games"])
-def patch_game(game_id: ResourceId, body: schemas.GameUpdate, db: DB) -> models.Game:
+def patch_game(game_id: ResourceId, body: schemas.GameUpdate, db: DB, actor: Actor) -> models.Game:
+    access_game(db, game_id, actor, write=True)
     row = db.scalar(select(models.Game).where(models.Game.game_id == game_id).with_for_update())
     if row is None:
         raise HTTPException(404, "Record not found")
@@ -306,15 +374,16 @@ def patch_game(game_id: ResourceId, body: schemas.GameUpdate, db: DB) -> models.
 
 
 @router.delete("/games/{game_id}", status_code=204, tags=["games"])
-def delete_game(game_id: ResourceId, db: DB) -> Response:
-    db.delete(find(db, models.Game, game_id))
+def delete_game(game_id: ResourceId, db: DB, actor: Actor) -> Response:
+    db.delete(access_game(db, game_id, actor, write=True))
     db.flush()
     return Response(status_code=204)
 
 
 @router.post("/games/{game_id}/result", response_model=schemas.GameResult, status_code=201,
              responses={200: {"model": schemas.GameResult, "description": "Identical result already recorded"}}, tags=["games"])
-def record_result(game_id: ResourceId, body: schemas.GameResultInput, response: Response, db: DB) -> models.GameResult:
+def record_result(game_id: ResourceId, body: schemas.GameResultInput, response: Response, db: DB, actor: Actor) -> models.GameResult:
+    access_game(db, game_id, actor, write=True)
     # Serialize completion with player replacement and other completion requests.
     game = db.scalar(select(models.Game).where(models.Game.game_id == game_id).with_for_update())
     if game is None:
@@ -338,8 +407,9 @@ def record_result(game_id: ResourceId, body: schemas.GameResultInput, response: 
     return row
 
 
-@router.get("/games/{game_id}/result", response_model=schemas.GameResult, tags=["games"])
-def get_result(game_id: ResourceId, db: DB) -> models.GameResult:
+@router.get("/games/{game_id}/result", response_model=schemas.GameResult, openapi_extra={"security": [{"ClerkSession": []}, {}]}, tags=["games"])
+def get_result(game_id: ResourceId, db: DB, actor: OptionalActor) -> models.GameResult:
+    access_game(db, game_id, actor)
     row = db.scalar(select(models.GameResult).where(models.GameResult.game_id == game_id))
     if row is None:
         raise HTTPException(404, "Result not found")

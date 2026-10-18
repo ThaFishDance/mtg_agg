@@ -94,6 +94,20 @@
 - Decision: GET `/api/v1/pods/{pod_id}/stats/colors` reports both individual colors and exact combinations. Normalize W/U/B/R/G strings by case, symbol order, and duplicates; explicit C means colorless. Null, blank, invalid strings, and C mixed with colored symbols are unknown and excluded. Only completed player appearances count; wins and draws follow the existing statistics semantics, with draws included in percentage win-rate denominators.
 - Consequences: Read-time SQL normalization leaves stored values and write validation unchanged. Canonical combinations use WUBRG order. Response has observed `colors` in W/U/B/R/G/C order and observed `combinations` in lexicographic canonical-string order; each row uses `color_schema` as its identity. At most six colors and 32 combinations, so no pagination. Empty data returns empty lists. Existing unauthenticated access policy applies. No schema migration or dependencies.
 
+## ADR-013 — Clerk and pod privacy
+
+- Date: 2026-10-16
+- Status: Accepted by user; implementation pending
+- Decision: Use Clerk for authentication. Pod history and statistics are private by default. A pod may expose its history/statistics publicly only with pod-owner approval.
+- Consequences: Backend must verify Clerk identity, map it to local users, and enforce pod access consistently. Public status grants read access to history/statistics, not mutation rights or user-profile/email access. Existing schema has no Clerk subject mapping, explicit pod owner, or visibility setting; migrations and an existing-record policy are needed. Owner assignment, member/admin write powers, and ownership transfer/deletion remain unresolved. See [AUTH.md](AUTH.md). This decision supersedes the earlier provider/visibility deferral; current endpoints remain unauthenticated until implementation lands.
+
+## ADR-014 — Clerk enforcement and approved pod roles
+
+- Date: 2026-10-16
+- Status: Accepted and implemented after user confirmed creator ownership and the proposed role matrix
+- Decision: Creator owns the pod and becomes a member. Members read private data; admins manage members/games/results; owner additionally changes visibility/admin grants and deletes pods. Public status exposes completed history/results and statistics, not profiles, full membership, or unfinished games. Clerk RS256 sessions are verified with PyJWT/cryptography and configured PEM public key, issuer, authorized parties, and optional audience.
+- Consequences: New v002 migration adds unique Clerk subject and explicit nullable owner/private visibility. Existing records stay unclaimed/private; no email-based adoption. User CRUD is self-only. Account provisioning uses verified subject plus local profile input; local emails remain unverified contact data. Owner deletion is blocked while pods remain; transfer is deferred. Pod permission locks serialize writes and grant/visibility changes. Applied migrations are unchanged; no live migration. Local RSA and PostgreSQL tests passed (56 tests). Real tenant/client smoke checks and reviewed backfill remain future work.
+
 ## Future decision template
 
 ID, date, status (Proposed/Accepted/Superseded), decision, context, alternatives, consequences, and links to affected documents. Record auth, runtime, contract, migration, and deployment choices when resolved. See [architecture](ARCHITECTURE.md).

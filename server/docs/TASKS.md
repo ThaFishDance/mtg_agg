@@ -1,16 +1,18 @@
 # Backend execution plan
 
-Accepted initial scope: users, pods/members, and games/players CRUD based on the supplied SQL migration, SQLAlchemy ORM, PostgreSQL, and `/api/v1` snake_case contracts. Authentication and client migration are deferred. See [requirements](REQUIREMENTS.md) and [testing](TESTING.md).
+Accepted initial scope: users, pods/members, and games/players CRUD based on the supplied SQL migration, SQLAlchemy ORM, PostgreSQL, and `/api/v1` snake_case contracts. Clerk authentication and pod permissions are now implemented; client migration remains deferred. See [requirements](REQUIREMENTS.md) and [testing](TESTING.md).
 
 ## Next
 
-No additional domain work is active. Pod-admin APIs, authentication, broader game lifecycle features, and production/data cutover require future scope decisions.
+Clerk identity and pod access are implemented. Next candidates: live Clerk/client integration, explicit existing-account/owner backfill, or Scryfall. Ownership transfer, broader lifecycle, and production/data cutover remain separate scope decisions.
 
 ## In progress
 
 None.
 
 ## Done
+
+- [x] **TASK-004 — Clerk identity and pod access.** REQ-009. Verified session identity, self-only profiles, creator ownership, automatic owner membership, member reads, admin writes, owner-only visibility/admin grants and pod deletion, private defaults, public completed-history/statistics, and safe unclaimed existing records. New explicit v002 migration; no live migration. All 56 tests passed against PostgreSQL, including signed-token checks, access matrix, leakage/pagination checks, populated-schema defaults, rollback and concurrency. Live Clerk tenant/frontend integration, account/owner backfill and ownership transfer remain future work.
 
 - [x] **TASK-017 — Color statistics per pod.** REQ-019. User approved individual-color and exact-combination statistics with W/U/B/R/G normalization, explicit C for colorless, and unknown-value exclusion. GET `/api/v1/pods/{pod_id}/stats/colors` counts completed appearances, wins, and draws; percentage win rates include draws in the denominator. Verified 2026-10-16: 29 tests passed against PostgreSQL, including normalization, duplicate symbols, invalid/null/blank values, same-identity players, draws, rounding, pod isolation, unfinished exclusion, empty data, and OpenAPI. Added endpoint diagram and updated map/index. No migration, write-contract, or client changes.
 
@@ -33,9 +35,8 @@ None.
 
 ## Blocked / conditional roadmap
 
-These tasks remain deferred until explicitly activated by the user. The initial CRUD API does not depend on authentication.
+The remaining roadmap tasks are conditional; implemented identity and pod permissions are documented in AUTH.md.
 
-- [ ] **TASK-004 — Verified identity and ownership.** Requirements: REQ-009. Dependencies: TASK-002, TASK-003. Acceptance: provider verification tested for valid/invalid credentials; identity cannot be forged through request fields; dependency usable by protected routes; tests for cross-user access are required as routes land.
 - [ ] **TASK-005 — Game lifecycle and history.** Requirements: REQ-004. Dependencies: TASK-003; TASK-004 if games are private. Acceptance: create/detail/history/completion contract tests; exact participant membership, winner policy, atomic writes, pagination, and repeated/concurrent completion behavior verified.
 - [ ] **TASK-006 — Statistics.** Requirements: REQ-005. Dependencies: TASK-005. Acceptance: fixture-derived player/commander/color/combination results match documented rules; no active games included; empty/colorless inputs covered; ownership scope follows approved game policy.
 - [ ] **TASK-007 — Scryfall adapter and routes.** Requirements: REQ-008. Dependencies: TASK-001, TASK-002; TASK-004 if protected. Acceptance: finite timeouts, documented upstream failures, bounded/defined print pagination, and mocked API tests; rate/retry policy documented without live calls in tests.

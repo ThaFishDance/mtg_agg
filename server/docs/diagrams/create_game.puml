@@ -9,6 +9,7 @@ Client -> API: POST /api/v1/games
 API -> API: Validate path, query and body
 note over API: Invalid input -> 422
 API -> DB: get_db(): request transaction
+ref over API, DB: Clerk identity and route permissions (auth.puml)
 DB -> PG: Find pod; missing -> 404
 DB -> PG: Insert game; flush generated ID
 DB -> PG: For each player: lock member FOR SHARE; require same pod (422)

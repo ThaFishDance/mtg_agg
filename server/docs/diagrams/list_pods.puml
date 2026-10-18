@@ -7,10 +7,12 @@ participant "SQLAlchemy session" as DB
 database PostgreSQL as PG
 Client -> API: GET /api/v1/pods
 API -> API: Validate path, query and body
-note over API: Invalid input -> 422
-No authentication required
+note over API
+Invalid input -> 422; access checks also apply.
+end note
 API -> DB: get_db(): request transaction
-DB -> PG: Select pods ordered by pod_id; apply limit/offset
+ref over API, DB: Clerk identity and route permissions (auth.puml)
+DB -> PG: Filter caller-owned/member pods; order by ID; apply limit/offset
 DB -> PG: Load members for selected pods
 PG --> DB: Rows / mutation outcome
 DB --> API: Route result
@@ -18,6 +20,8 @@ API -> API: Validate/serialize response
 API -> DB: Finish successful request
 DB -> PG: COMMIT
 API --> Client: 200
-note over API, PG: Any failure aborts the success path and rolls back.
+note over API, PG
+Any failure aborts the success path and rolls back.
 See transaction.puml for shared error handling.
+end note
 @enduml

@@ -17,7 +17,7 @@ else Valid input
     TX -> TX: Open session and transaction
     API -> TX: Execute route queries / mutations
     TX -> PG: SQL (flush may execute writes)
-    alt Route raises HTTPException (404 / 409 / 422)
+    alt Route raises HTTPException (401 / 403 / 404 / 409 / 422 / 503)
       TX -> PG: ROLLBACK
       TX --> API: Propagate HTTPException
       API --> Client: Original status {detail: ...}

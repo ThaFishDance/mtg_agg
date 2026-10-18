@@ -93,3 +93,12 @@ def test_openapi_documents_color_statistics() -> None:
     assert set(schema["components"]["schemas"]["ColorStatsItem"]["required"]) == {
         "color_schema", "appearances", "wins", "draws", "win_rate",
     }
+
+
+def test_openapi_documents_clerk_and_access_controls() -> None:
+    schema = create_app().openapi()
+    assert schema["components"]["securitySchemes"]["ClerkSession"]["scheme"] == "bearer"
+    assert {} in schema["paths"]["/api/v1/games"]["get"]["security"]
+    assert {} not in schema["paths"]["/api/v1/games"]["post"]["security"]
+    assert "patch" in schema["paths"]["/api/v1/pods/{pod_id}/visibility"]
+    assert "put" in schema["paths"]["/api/v1/pods/{pod_id}/admins/{user_id}"]

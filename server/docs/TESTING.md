@@ -2,7 +2,7 @@
 
 ## Current status
 
-The suite covers health/OpenAPI, users/pods/games CRUD, nested member boundaries, input and pagination bounds, PostgreSQL constraint conflicts, deletion cascades, cross-pod participant rejection, transaction rollback, ORM/migration column agreement, and repeatable SQL migration execution. Integration tests apply the actual supplied SQL in isolated schemas and run the production SQLAlchemy transaction dependency. No authentication, client process, or external API is required. PostgreSQL tests skip unless `TEST_DATABASE_URL` is set.
+The suite covers health/OpenAPI, users/pods/games CRUD, nested member boundaries, input and pagination bounds, PostgreSQL constraint conflicts, deletion cascades, cross-pod participant rejection, transaction rollback, ORM/migration column agreement, and repeatable SQL migration execution. Integration tests apply the actual supplied SQL in isolated schemas and run the production SQLAlchemy transaction dependency. Tests generate signed local sessions; no live Clerk account, client process, or external API is required. PostgreSQL tests skip unless `TEST_DATABASE_URL` is set.
 
 Game-result verification on **2026-10-16**: **18 tests passed without warnings** against PostgreSQL. Coverage includes winner/draw persistence, identical/conflicting repeats, invalid and foreign winners, rollback of combined timestamp/player changes, participant locking after draws and wins, deletion cascades, concurrent identical/conflicting submissions, completion racing participant replacement, and generated OpenAPI result schemas/statuses.
 
@@ -13,6 +13,8 @@ Player-statistics verification on **2026-10-16**: **23 tests passed without warn
 Commander-statistics verification on **2026-10-16**: **26 tests passed without warnings** against PostgreSQL. Fixtures cover repeated pairs, multiple players using the same pair in a game, wins/draws/losses, main/secondary ordering, case-sensitive grouping, absent/blank main exclusion, unfinished exclusion, pod isolation, percentage rounding, empty data, pagination, invalid IDs/bounds, and OpenAPI.
 
 Color-statistics verification on **2026-10-16**: **29 tests passed without warnings** against PostgreSQL. Fixtures cover case/order/duplicate normalization, explicit colorless, all five colors, invalid/null/blank exclusion, unknown winners, multiple same-identity players, wins/draws, rounding, unfinished exclusion, pod isolation, empty/unknown-only data, stored-value preservation, invalid IDs, and OpenAPI.
+
+Clerk/access verification on **2026-10-18**: **56 tests passed without warnings** against PostgreSQL. Local RSA-signed sessions exercise real verification (issuer, authorized party, signature, algorithm, expiry/not-before/issued-at, required claims, audience, pending sessions), profile isolation, role/public-read matrix, visibility reversal, collection filtering before pagination, admin revocation, ownership guards, missing-config behavior, and populated-schema migration defaults. Existing CRUD/statistics/concurrency tests now authenticate through signed tokens; no identity/access dependency overrides. Live Clerk/frontend sign-in was not exercised.
 
 ## Proposed test layers
 

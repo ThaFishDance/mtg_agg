@@ -2,7 +2,7 @@
 
 ## Status and evidence
 
-The user confirmed a FastAPI backend with users, pods, and games CRUD, based on `migrations/v001__create_initial_tables.sql`, using SQLAlchemy ORM and PostgreSQL. Authentication is explicitly deferred. `/api/v1` and snake_case JSON are accepted; client updates happen later. Python 3.12 and uv are configured. CRUD and integration tests are implemented; deployment and legacy-data cutover remain deferred. The existing Next.js application is a reference, not the new backend.
+The user confirmed a FastAPI backend with users, pods, and games CRUD, based on `migrations/v001__create_initial_tables.sql`, using SQLAlchemy ORM and PostgreSQL. Clerk session verification and pod permissions are implemented. Pod history/statistics must be private by default and may be made public only with pod-owner approval. `/api/v1` and snake_case JSON are accepted; client updates happen later. Python 3.12 and uv are configured. CRUD and integration tests are implemented; deployment and legacy-data cutover remain deferred. The existing Next.js application is a reference, not the new backend.
 
 Working project name: MTG Aggregator (inferred from the repository name). Target users are Commander players managing matches, decks, and owned cards (inferred from existing pages). Exact MVP scope is TBD; legacy capabilities below are candidates, not automatically approved requirements.
 
@@ -20,7 +20,7 @@ Evidence: [legacy guidance](../../client/CLAUDE.md), [database schema](../../cli
 | REQ-006 | Proposed | User-owned decks and card lists, including bulk import | CRUD works for owner; other users cannot read or mutate resources; invalid bulk requests have no partial writes. |
 | REQ-007 | Proposed | User-owned card inventory | CRUD preserves quantity, finish, condition, printing metadata; cross-user access is denied. |
 | REQ-008 | Proposed | Scryfall autocomplete, lookup, and print search | Mocked successes, not-found, timeout, throttling, and upstream failure return documented responses; requests have finite timeouts. |
-| REQ-009 | Proposed | Authenticate access to private resources | Verified identity determines ownership; missing/invalid credentials fail; clients cannot choose their owner ID. Provider and game visibility remain TBD. |
+| REQ-009 | Confirmed, implemented | Authenticate access to private resources with Clerk | Verify Clerk identity on the backend and map it to a local user; clients cannot choose their authenticated identity. Pod history/statistics are private by default; only the pod owner may approve public visibility. Members read; admins manage members/games/results; owners also control visibility/admin grants and pod deletion. |
 
 ## Accepted initial release (supersedes the legacy proposals above)
 
@@ -30,10 +30,10 @@ Evidence: [legacy guidance](../../client/CLAUDE.md), [database schema](../../cli
 | REQ-011 | Confirmed | Pod and membership CRUD | Registered or temporary members, unique registered membership, nested pod/member checks, and atomic membership changes preserving referenced history. |
 | REQ-012 | Confirmed | Game CRUD | Pod association, optional played timestamp and players, exact same-pod participant checks, duplicate prevention, atomic updates, and documented deletion cascades. |
 | REQ-013 | Confirmed | SQLAlchemy ORM / PostgreSQL / supplied SQL schema | ORM mapping and CRUD verified against the supplied migration on disposable PostgreSQL; explicit migration command with no production changes. |
-| REQ-014 | Confirmed | Versioned API, authentication later | `/api/v1`, snake_case contracts and bounded lists; auth is not required for initial routes. |
+| REQ-014 | Confirmed, auth policy superseded by REQ-009 | Versioned API | `/api/v1`, snake_case contracts and bounded lists. Initial unauthenticated behavior is now replaced by Clerk and pod permissions under REQ-009. |
 | REQ-015 | Confirmed 2026-10-16 | Record/read one result per game | Winner is a game-player ID or explicit null for a draw; identical repeats return the existing result, conflicting repeats return 409; participants cannot be replaced after a result exists. Concurrent writes and rollback verified against PostgreSQL. |
 
-Completed-game filtering and embedded results are accepted under REQ-016. REQ-004's legacy game-completion contract and REQ-006–REQ-009 (decks, inventory, Scryfall, auth) are deferred. Per-pod color statistics are accepted under REQ-019; other legacy statistics contracts remain reference only. Per-pod player and commander statistics are accepted under REQ-017 and REQ-018. Pod-admin permission APIs remain deferred; their tables are mapped to preserve schema fidelity. Existing-data retention/cutover remains unresolved and is not required to implement this separate API.
+Completed-game filtering and embedded results are accepted under REQ-016. REQ-004's legacy game-completion contract and REQ-006–REQ-008 (decks, inventory, Scryfall) are deferred. REQ-009 is implemented for Clerk, self-profile access, owner/admin/member roles, and pod privacy. Per-pod color statistics are accepted under REQ-019; other legacy statistics contracts remain reference only. Per-pod player and commander statistics are accepted under REQ-017 and REQ-018. Owner-only pod admin grants/revocations are implemented using the mapped admin table. Existing-data retention/cutover remains unresolved and is not required to implement this separate API.
 
 | ID | Status | Requirement | Acceptance criteria |
 |---|---|---|---|
@@ -58,6 +58,6 @@ Never expose credentials or internal exception details. Enforce ownership in per
 
 Confirmed non-goal: frontend rebuild during this phase. Proposed non-goals: live multiplayer synchronization, persistent turn-by-turn event tracking, trading/payments, automatic price refresh, and full deck legality enforcement. The legacy event model alone does not establish an event API requirement.
 
-Python 3.12, SQLAlchemy ORM, PostgreSQL, users/pods/games CRUD, `/api/v1`, and deferred authentication are confirmed. Auth provider, future permissions, broader game-lifecycle semantics, existing-data conversion, and hosting remain open for later tasks. Never reset a database based on the phrase “from scratch.”
+Python 3.12, SQLAlchemy ORM, PostgreSQL, users/pods/games CRUD, `/api/v1`, and Clerk authentication are confirmed. Clerk and private-by-default pod history/statistics with owner-approved public visibility are confirmed. Creator ownership and member/admin write permissions are implemented. Ownership transfer and existing identity/ownership backfill, broader game-lifecycle semantics, existing-data conversion, and hosting remain open. See [auth plan](AUTH.md). Never reset a database based on the phrase “from scratch.”
 
 See [architecture](ARCHITECTURE.md), [API](API.md), and [tasks](TASKS.md).

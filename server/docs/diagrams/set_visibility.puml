@@ -1,0 +1,20 @@
+@startuml
+title PATCH /api/v1/pods/{pod_id}/visibility
+hide footbox
+actor Client
+participant "FastAPI / Pydantic" as API
+participant "SQLAlchemy session" as DB
+database PostgreSQL as PG
+Client -> API: PATCH /api/v1/pods/{pod_id}/visibility
+API -> API: Verify Clerk bearer session; validate input
+API -> DB: Resolve local caller; open transaction
+DB -> PG: Lock pod FOR UPDATE; require owner (404/403)
+DB -> PG: Update is_public from request; flush
+PG --> DB: Updated row
+DB --> API: Route result
+API -> API: Validate / serialize response
+API -> DB: Exit request transaction
+DB -> PG: COMMIT
+API --> Client: 200
+note over API, PG: Failure rolls back; see auth.puml and transaction.puml.
+@enduml

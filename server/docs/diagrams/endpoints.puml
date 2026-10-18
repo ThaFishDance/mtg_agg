@@ -2,9 +2,9 @@
 title MTG Aggregator - implemented endpoints
 left to right direction
 actor Client
-rectangle "FastAPI (unauthenticated)" {
+rectangle "FastAPI (Clerk and pod roles)" {
 rectangle "Users\n\nPOST /api/v1/users\nGET /api/v1/users\nGET /api/v1/users/{user_id}\nPATCH /api/v1/users/{user_id}\nDELETE /api/v1/users/{user_id}" as Users
-rectangle "Pods and members\n\nPOST /api/v1/pods\nGET /api/v1/pods\nGET /api/v1/pods/{pod_id}\nGET /api/v1/pods/{pod_id}/stats/players\nGET /api/v1/pods/{pod_id}/stats/commanders\nGET /api/v1/pods/{pod_id}/stats/colors\nPUT /api/v1/pods/{pod_id}\nDELETE /api/v1/pods/{pod_id}\nPOST /api/v1/pods/{pod_id}/members\nPUT /api/v1/pods/{pod_id}/members/{member_id}\nDELETE /api/v1/pods/{pod_id}/members/{member_id}" as Pods
+rectangle "Pods and members\n\nPOST /api/v1/pods\nGET /api/v1/pods\nGET /api/v1/pods/{pod_id}\nGET /api/v1/pods/{pod_id}/stats/players\nGET /api/v1/pods/{pod_id}/stats/commanders\nGET /api/v1/pods/{pod_id}/stats/colors\nPATCH /api/v1/pods/{pod_id}/visibility\nPUT /api/v1/pods/{pod_id}/admins/{user_id}\nPUT /api/v1/pods/{pod_id}\nDELETE /api/v1/pods/{pod_id}\nPOST /api/v1/pods/{pod_id}/members\nPUT /api/v1/pods/{pod_id}/members/{member_id}\nDELETE /api/v1/pods/{pod_id}/members/{member_id}" as Pods
 rectangle "Games and results\n\nPOST /api/v1/games\nGET /api/v1/games\nGET /api/v1/games/{game_id}\nPATCH /api/v1/games/{game_id}\nDELETE /api/v1/games/{game_id}\nPOST /api/v1/games/{game_id}/result\nGET /api/v1/games/{game_id}/result" as Games
 rectangle "Health\n\nGET /api/health\nGET /api/v1/health" as Health
 rectangle "Documentation\nGET /docs\nGET /redoc\nGET /openapi.json" as Docs

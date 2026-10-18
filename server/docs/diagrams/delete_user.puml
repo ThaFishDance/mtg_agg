@@ -7,11 +7,13 @@ participant "SQLAlchemy session" as DB
 database PostgreSQL as PG
 Client -> API: DELETE /api/v1/users/{user_id}
 API -> API: Validate path, query and body
-note over API: Invalid input -> 422
-No authentication required
+note over API
+Invalid input -> 422; access checks also apply.
+end note
 API -> DB: get_db(): request transaction
+ref over API, DB: Clerk identity and route permissions (auth.puml)
 DB -> PG: Find user; missing -> 404
-DB -> PG: Lock linked pod members
+DB -> PG: Reject deletion while owning pods (409); lock linked members
 DB -> PG: Preserve temporary identity when absent; flush
 DB -> PG: Delete user; flush (member user_id becomes null)
 PG --> DB: Rows / mutation outcome
@@ -20,6 +22,8 @@ API -> API: Validate/serialize response
 API -> DB: Finish successful request
 DB -> PG: COMMIT
 API --> Client: 204
-note over API, PG: Any failure aborts the success path and rolls back.
+note over API, PG
+Any failure aborts the success path and rolls back.
 See transaction.puml for shared error handling.
+end note
 @enduml

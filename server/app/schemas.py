@@ -61,7 +61,24 @@ class Pod(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     pod_id: int
     created_date: datetime
+    owner_user_id: int | None
+    is_public: bool
     members: list[Member]
+
+
+class PodVisibility(Input):
+    is_public: bool
+
+
+class PodAdminInput(Input):
+    is_admin: bool
+
+
+class PodAdmin(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    pod_id: int
+    user_id: int
+    is_admin: bool
 
 
 class PlayerInput(Input):

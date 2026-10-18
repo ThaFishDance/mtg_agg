@@ -8,6 +8,7 @@ database PostgreSQL as PG
 Client -> API: GET /api/v1/pods/{pod_id}/stats/colors
 API -> API: Validate positive pod_id
 API -> DB: get_db(): request transaction
+ref over API, DB: Clerk identity and route permissions (auth.puml)
 DB -> PG: Find pod; missing -> 404
 DB -> PG: Join players, games and results scoped to pod
 DB -> PG: Normalize case/order/duplicates of WUBRG; explicit C = colorless

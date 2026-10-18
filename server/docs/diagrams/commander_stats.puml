@@ -9,6 +9,7 @@ Client -> API: GET /api/v1/pods/{pod_id}/stats/commanders
 API -> API: Validate path, query and body
 note over API: Invalid input -> 422
 API -> DB: get_db(): request transaction
+ref over API, DB: Clerk identity and route permissions (auth.puml)
 DB -> PG: Find pod; missing -> 404
 DB -> PG: Join players, games and results scoped to pod
 DB -> PG: Exclude null/blank main cards

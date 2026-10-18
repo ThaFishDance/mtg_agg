@@ -9,26 +9,9 @@ from psycopg import sql
 from sqlalchemy.engine import make_url
 
 from app.main import create_app
+from conftest import session_token
 
 
-@pytest.fixture
-def client(monkeypatch):
-    url = os.getenv("TEST_DATABASE_URL")
-    if not url:
-        pytest.skip("Set TEST_DATABASE_URL to run PostgreSQL integration tests")
-    schema = "test_" + uuid4().hex
-    # Each test uses the supplied migration in a separate disposable schema.
-    with psycopg.connect(url, autocommit=True) as admin:
-        admin.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
-        try:
-            admin.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
-            admin.execute((Path(__file__).parents[1] / "migrations/v001__create_initial_tables.sql").read_text())
-            database_url = make_url(url).update_query_dict({"options": f"-csearch_path={schema}"}).render_as_string(hide_password=False)
-            monkeypatch.setenv("DATABASE_URL", database_url)
-            with TestClient(create_app()) as instance:
-                yield instance
-        finally:
-            admin.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
 
 
 def user(client, email="one@example.com"):
@@ -38,6 +21,9 @@ def user(client, email="one@example.com"):
 
 
 def pod(client, members):
+    # Provision the authenticated owner on demand; owner is always a member.
+    if client.get("/api/v1/users").status_code == 403:
+        user(client, "owner@example.com")
     response = client.post("/api/v1/pods", json={"members": members})
     assert response.status_code == 201, response.text
     return response.json()
@@ -54,17 +40,21 @@ def test_user_crud_and_validation(client):
     assert client.post("/api/v1/users", json={"first_name": " ", "last_name": "X", "email": "bad"}).status_code == 422
     assert client.post("/api/v1/users", json={"first_name": "A", "last_name": "B", "email": row["email"]}).status_code == 409
     assert client.delete(path).status_code == 204
-    assert client.get(path).status_code == 404
-    assert client.delete(path).status_code == 404
+    assert client.get(path).status_code == 403
+    assert client.delete(path).status_code == 403
 
 
 def test_pod_crud_and_user_deletion_preserves_guest(client):
     owner = user(client)
+    client.headers["Authorization"] = "Bearer " + session_token(client.signing_key, "other_owner")
+    user(client, "other_owner@example.com")
     row = pod(client, [{"user_id": owner["user_id"]}, {"temporary_name": "Guest"}])
     path = f"/api/v1/pods/{row['pod_id']}"
     assert client.get(path).json() == row
     assert client.get("/api/v1/pods").json()["items"] == [row]
+    client.headers["Authorization"] = "Bearer " + session_token(client.signing_key)
     assert client.delete(f"/api/v1/users/{owner['user_id']}").status_code == 204
+    client.headers["Authorization"] = "Bearer " + session_token(client.signing_key, "other_owner")
     member = client.get(path).json()["members"][0]
     assert member["user_id"] is None
     assert member["temporary_name"] == "Ada Lovelace"
@@ -88,7 +78,7 @@ def test_game_crud_and_pod_cascade(client):
     assert client.patch(path, json={"date_played": "2026-10-12T12:00:00"}).status_code == 422
     assert client.patch(path, json={"date_played": None}).json()["date_played"] is None
     assert client.put(f"/api/v1/pods/{row['pod_id']}", json={"members": []}).status_code == 409
-    assert len(client.get(f"/api/v1/pods/{row['pod_id']}").json()["members"]) == 1
+    assert len(client.get(f"/api/v1/pods/{row['pod_id']}").json()["members"]) == 2
     response = client.patch(path, json={"players": [{"pod_member_id": member_id, "main_card": "Island"}]})
     assert response.status_code == 200, response.text
     assert response.json()["players"][0]["main_card"] == "Island"
@@ -117,6 +107,7 @@ def test_cross_pod_and_duplicate_players_roll_back(client):
 
 
 def test_invalid_references_and_pagination(client):
+    user(client)
     assert client.post("/api/v1/pods", json={"members": [{}]}).status_code == 422
     assert client.post("/api/v1/pods", json={"members": [{"user_id": 999}]}).status_code == 409
     assert client.get("/api/v1/pods").json()["items"] == []
@@ -175,7 +166,7 @@ def test_migration_runner_is_repeatable(monkeypatch):
         engine_url = make_url(url).update_query_dict({"options": f"-csearch_path={schema}"}).render_as_string(hide_password=False)
         engine = build_engine(engine_url)
         try:
-            assert apply_migrations(engine) == ["v001__create_initial_tables.sql"]
+            assert apply_migrations(engine) == ["v001__create_initial_tables.sql", "v002__add_clerk_and_pod_access.sql"]
             assert apply_migrations(engine) == []
         finally:
             engine.dispose()
@@ -361,15 +352,15 @@ def test_pod_player_statistics(client):
     assert client.get(path).json() == {"items": expected, "limit": 50, "offset": 0}
     assert client.get(path + "?limit=1&offset=1").json() == {"items": expected[1:2], "limit": 1, "offset": 1}
     assert client.get(path + "?offset=4").json()["items"] == []
-    # Names and registered-user deletion do not change pod-member identity or counts.
-    assert client.delete(f"/api/v1/users/{registered['user_id']}").status_code == 204
+    # An owner must delete owned pods before deleting their local profile.
+    assert client.delete(f"/api/v1/users/{registered['user_id']}").status_code == 409
     assert client.get(path).json()["items"] == expected
 
 
 def test_player_statistics_empty_and_validation(client):
     row = pod(client, [])
     path = f"/api/v1/pods/{row['pod_id']}/stats/players"
-    assert client.get(path).json() == {"items": [], "limit": 50, "offset": 0}
+    assert client.get(path).json()["items"][0]["games_played"] == 0
     assert client.get("/api/v1/pods/999999/stats/players").status_code == 404
     assert client.get("/api/v1/pods/0/stats/players").status_code == 422
     for query in ["limit=0", "limit=101", "offset=-1"]:
@@ -474,3 +465,25 @@ def test_color_statistics_empty_unknown_and_validation(client):
     assert client.get(f"/api/v1/pods/{empty['pod_id']}/stats/colors").json() == {"colors": [], "combinations": []}
     assert client.get("/api/v1/pods/999999/stats/colors").status_code == 404
     assert client.get("/api/v1/pods/0/stats/colors").status_code == 422
+
+
+def test_access_migration_keeps_existing_data_private():
+    url = os.getenv("TEST_DATABASE_URL")
+    if not url:
+        pytest.skip("Set TEST_DATABASE_URL for migration integration tests")
+    schema = "test_" + uuid4().hex
+    migrations = Path(__file__).parents[1] / "migrations"
+    with psycopg.connect(url, autocommit=True) as connection:
+        connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+        try:
+            connection.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
+            connection.execute((migrations / "v001__create_initial_tables.sql").read_text())
+            user_id = connection.execute("INSERT INTO app_user (first_name, last_name, email) VALUES ('Old', 'User', 'old@example.com') RETURNING user_id").fetchone()[0]
+            pod_id = connection.execute("INSERT INTO pod DEFAULT VALUES RETURNING pod_id").fetchone()[0]
+            connection.execute("INSERT INTO pod_user_admin (pod_id, user_id, is_admin) VALUES (%s, %s, TRUE)", (pod_id, user_id))
+            connection.execute((migrations / "v002__add_clerk_and_pod_access.sql").read_text())
+            assert connection.execute("SELECT owner_user_id, is_public FROM pod WHERE pod_id = %s", (pod_id,)).fetchone() == (None, False)
+            assert connection.execute("SELECT clerk_user_id FROM app_user WHERE user_id = %s", (user_id,)).fetchone() == (None,)
+            assert connection.execute("SELECT is_admin FROM pod_user_admin").fetchone() == (True,)
+        finally:
+            connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))

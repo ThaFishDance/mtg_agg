@@ -1,0 +1,42 @@
+@startuml
+title Clerk identity and route permissions
+hide footbox
+actor Client
+participant FastAPI as API
+participant "app.auth" as Auth
+database PostgreSQL as PG
+Client -> API: Request (optional Authorization bearer JWT)
+API -> Auth: Verify any supplied Clerk session
+alt Token supplied
+  Auth -> Auth: Require public key / issuer / authorized parties config
+  Auth -> Auth: Verify RS256 signature, issuer, exp/nbf/iat, sub/sid, azp
+  note over Auth: Invalid session -> 401; missing/invalid config -> 503
+  Auth -> PG: Resolve user by verified Clerk subject
+  PG --> Auth: Local profile or none
+else No token
+  Auth -> Auth: Anonymous caller
+end
+alt POST /users
+  Auth --> API: Require verified subject; provision self (no email-based linking)
+else Profile / pod collection / pod detail
+  Auth --> API: Require local profile; self-only or owned/member pods
+else Game list / game detail / result / statistics
+  Auth -> PG: Filter/check private pod membership or ownership
+  alt Private permission absent
+    Auth -> PG: Require owner-approved public pod
+    Auth -> PG: For game history: require completed result
+  end
+  Auth --> API: Authorized read or hidden record (404)
+else Mutations
+  Auth -> PG: Lock pod; require owner or registered admin
+  note over Auth, PG
+Visibility, admin grants and pod deletion require owner.
+Admin revocation and membership changes share pod locking.
+Missing sign-in -> 401; missing local profile -> 403.
+Insufficient role -> 403; foreign private pod -> 404.
+end note
+  Auth --> API: Authorized mutation or error
+end
+API --> Client: Route response after request transaction completes
+note over API: Health and framework documentation bypass authentication.
+@enduml

@@ -14,7 +14,7 @@ Status: initial CRUD scope accepted and implemented. User selected users, pods, 
 |---|---|---|
 | MVP scope | Games, statistics, decks, inventory, and Scryfall routes exist | Games/statistics first, or all legacy features |
 | Database | Prisma schema uses PostgreSQL, arrays, and timezone-aware timestamps; deployment references PostgreSQL 16 | Retain PostgreSQL or select another store |
-| Authentication | Client uses Clerk; decks and inventory resolve authenticated owners | Retain Clerk or select another provider |
+| Authentication | Client uses Clerk; decks and inventory resolve authenticated owners | Clerk approved and implemented; see AUTH.md |
 | Data retention | Six legacy tables include games, participants, events, decks, deck cards, and inventory | Preserve existing data or use a separate fresh database |
 | API compatibility | Existing `/api` routes mix camelCase requests and snake_case responses | Preserve formats or introduce `/api/v1` with consistent snake_case |
 
@@ -24,7 +24,7 @@ Game-result scope was approved on 2026-10-16: winner by game-player ID, explicit
 
 | Decision | Concrete alternatives / constraints |
 |---|---|
-| Game visibility | Shared games/history/statistics as in legacy routes, or authenticated owner-scoped access |
+| Game visibility | Private by default; owner may enable public completed history/statistics. Creator owns pod; member reads, admin writes, owner manages visibility/admin grants. Implemented; see AUTH.md. |
 | Winner and draws | Winner by participant ID or legacy name; support draws explicitly or require one winner |
 | Duplicate names | Permit distinct participants with the same name using IDs, or reject duplicate normalized names |
 | Completion | Validate exact participant set and write atomically; decide whether repeat completion returns the original result or 409 |

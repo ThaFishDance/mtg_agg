@@ -20,12 +20,16 @@ class User(Base):
     created_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp())
     logged_in_last: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     verified: Mapped[bool] = mapped_column(Boolean, server_default=text("FALSE"))
+    clerk_user_id: Mapped[str | None] = mapped_column(String(255), unique=True)
 
 
 class Pod(Base):
     __tablename__ = "pod"
+    __table_args__ = (CheckConstraint("NOT is_public OR owner_user_id IS NOT NULL", name="chk_public_pod_owner"),)
     pod_id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     created_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp())
+    owner_user_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("app_user.user_id"))
+    is_public: Mapped[bool] = mapped_column(Boolean, server_default=text("FALSE"))
     members: Mapped[list["PodMember"]] = relationship(order_by="PodMember.pod_member_id", passive_deletes="all")
 
 

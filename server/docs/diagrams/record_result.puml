@@ -8,6 +8,7 @@ database PostgreSQL as PG
 Client -> API: POST result {player_winner: ID or null}
 API -> API: Validate required nullable winner and positive IDs
 API -> DB: get_db(): request transaction
+ref over API, DB: Clerk identity and route permissions (auth.puml)
 DB -> PG: Lock game FOR UPDATE
 break Game missing
   DB -> PG: ROLLBACK

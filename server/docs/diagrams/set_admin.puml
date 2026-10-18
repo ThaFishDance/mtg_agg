@@ -1,0 +1,20 @@
+@startuml
+title PUT /api/v1/pods/{pod_id}/admins/{user_id}
+hide footbox
+actor Client
+participant "FastAPI / Pydantic" as API
+participant "SQLAlchemy session" as DB
+database PostgreSQL as PG
+Client -> API: PUT /api/v1/pods/{pod_id}/admins/{user_id}
+API -> API: Verify Clerk bearer session; validate input
+API -> DB: Resolve local caller; open transaction
+DB -> PG: Lock pod FOR UPDATE; require owner (404/403)
+DB -> PG: Require registered target member (422); upsert is_admin; flush
+PG --> DB: Updated row
+DB --> API: Route result
+API -> API: Validate / serialize response
+API -> DB: Exit request transaction
+DB -> PG: COMMIT
+API --> Client: 200
+note over API, PG: Failure rolls back; see auth.puml and transaction.puml.
+@enduml
