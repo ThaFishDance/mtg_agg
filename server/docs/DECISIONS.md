@@ -111,3 +111,7 @@
 ## Future decision template
 
 ID, date, status (Proposed/Accepted/Superseded), decision, context, alternatives, consequences, and links to affected documents. Record auth, runtime, contract, migration, and deployment choices when resolved. See [architecture](ARCHITECTURE.md).
+
+## 2026-10-17 — Explicit SQLite local mode
+
+User requested SQLite only with the `local` startup argument. `python -m app local` selects a persistent server/local.db and initializes ORM tables; ordinary startup retains PostgreSQL. SQLite enables foreign keys and BEGIN IMMEDIATE transactions to serialize writes in place of PostgreSQL row locks. Integer variants enable SQLite generated IDs without changing PostgreSQL BIGINT mappings. SQLAlchemy regexp matching supports both dialects; local connections provide strpos/concat for color aggregation. PostgreSQL migrations and production data are unchanged. No dependencies added.

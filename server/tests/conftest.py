@@ -36,8 +36,15 @@ def session_token(key, subject="test_default", **changes):
     return jwt.encode(claims, key, algorithm="RS256")
 
 
-@pytest.fixture
-def client(monkeypatch, signing_key):
+@pytest.fixture(params=["postgresql", "sqlite"])
+def client(monkeypatch, signing_key, tmp_path, request):
+    configure_auth(monkeypatch, signing_key)
+    if request.param == "sqlite":
+        with TestClient(create_app(local=True, local_db_path=tmp_path / "local.db")) as instance:
+            instance.headers["Authorization"] = "Bearer " + session_token(signing_key, "test_default")
+            instance.signing_key = signing_key
+            yield instance
+        return
     url = os.getenv("TEST_DATABASE_URL")
     if not url:
         pytest.skip("Set TEST_DATABASE_URL to run PostgreSQL integration tests")

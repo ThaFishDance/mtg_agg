@@ -14,6 +14,7 @@ from conftest import session_token
 
 
 
+
 def user(client, email="one@example.com"):
     response = client.post("/api/v1/users", json={"first_name": "Ada", "last_name": "Lovelace", "email": email})
     assert response.status_code == 201, response.text

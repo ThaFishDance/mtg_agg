@@ -54,3 +54,5 @@ Proposed errors and pagination are in [API](API.md). Use standard logging initia
 ## Trade-offs
 
 Modular monolith keeps development and tests simple. Separate backend means auth, CORS, and API contracts must be explicit. A clean implementation does not imply a clean production database. See [decisions](DECISIONS.md), [requirements](REQUIREMENTS.md), and [testing](TESTING.md).
+
+Explicit local development mode (`python -m app local`) uses SQLite at server/local.db, ignoring DATABASE_URL. Only this mode initializes ORM tables on startup. Connections enforce foreign keys and begin transactions with BEGIN IMMEDIATE to serialize competing updates. Normal startup and SQL migrations retain PostgreSQL behavior. SQLite files persist but existing schemas require explicit maintenance after model changes.

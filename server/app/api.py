@@ -219,7 +219,7 @@ def color_stats(pod_id: ResourceId, db: DB, actor: OptionalActor) -> dict:
     value = func.upper(func.trim(player.color_schema))
     canonical = case(
         (value == "C", "C"),
-        (value.op("~")("^[WUBRG]+$"), func.concat(*(
+        (value.regexp_match("^[WUBRG]+$"), func.concat(*(
             case((func.strpos(value, color) > 0, color), else_="") for color in "WUBRG"
         ))),
         else_=None,

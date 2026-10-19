@@ -61,3 +61,5 @@ Confirmed non-goal: frontend rebuild during this phase. Proposed non-goals: live
 Python 3.12, SQLAlchemy ORM, PostgreSQL, users/pods/games CRUD, `/api/v1`, and Clerk authentication are confirmed. Clerk and private-by-default pod history/statistics with owner-approved public visibility are confirmed. Creator ownership and member/admin write permissions are implemented. Ownership transfer and existing identity/ownership backfill, broader game-lifecycle semantics, existing-data conversion, and hosting remain open. See [auth plan](AUTH.md). Never reset a database based on the phrase “from scratch.”
 
 See [architecture](ARCHITECTURE.md), [API](API.md), and [tasks](TASKS.md).
+
+| REQ-020 | Confirmed 2026-10-17 | Explicit local SQLite mode | `python -m app local` uses persistent SQLite, ignores DATABASE_URL, initializes local tables, and supports existing CRUD/results/statistics. Startup without local retains PostgreSQL configuration. |

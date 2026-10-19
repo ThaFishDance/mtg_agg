@@ -102,3 +102,28 @@ def test_openapi_documents_clerk_and_access_controls() -> None:
     assert {} not in schema["paths"]["/api/v1/games"]["post"]["security"]
     assert "patch" in schema["paths"]["/api/v1/pods/{pod_id}/visibility"]
     assert "put" in schema["paths"]["/api/v1/pods/{pod_id}/admins/{user_id}"]
+
+
+def test_local_database_survives_restart(tmp_path, monkeypatch, signing_key):
+    from conftest import configure_auth, session_token
+
+    configure_auth(monkeypatch, signing_key)
+    headers = {"Authorization": "Bearer " + session_token(signing_key)}
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///must-not-be-used.db")
+    path = tmp_path / "local.db"
+    with TestClient(create_app(local=True, local_db_path=path), headers=headers) as client:
+        response = client.post("/api/v1/users", json={
+            "first_name": "Ada", "last_name": "Lovelace", "email": "ada@example.com",
+        })
+        assert response.status_code == 201
+        user = response.json()
+    with TestClient(create_app(local=True, local_db_path=path), headers=headers) as client:
+        assert client.get(f"/api/v1/users/{user['user_id']}").json() == user
+
+
+def test_sqlite_url_requires_local_mode():
+    import pytest
+    from app.db import build_engine
+
+    with pytest.raises(ValueError, match="PostgreSQL"):
+        build_engine("sqlite:///local.db")
