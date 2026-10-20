@@ -1,10 +1,10 @@
 # Backend execution plan
 
-Accepted initial scope: users, pods/members, and games/players CRUD based on the supplied SQL migration, SQLAlchemy ORM, PostgreSQL, and `/api/v1` snake_case contracts. Clerk authentication and pod permissions are now implemented; client migration remains deferred. See [requirements](REQUIREMENTS.md) and [testing](TESTING.md).
+Accepted initial scope: users, pods/members, and games/players CRUD based on the supplied SQL migration, SQLAlchemy ORM, PostgreSQL, and `/api/v1` snake_case contracts. Clerk authentication and pod permissions are now implemented; frontend reset and a mobile-first rebuild are now authorized. See [frontend tasks](../../client/TASKS.md). See [requirements](REQUIREMENTS.md) and [testing](TESTING.md).
 
 ## Next
 
-Clerk identity and pod access are implemented. Next candidates: live Clerk/client integration, explicit existing-account/owner backfill, or Scryfall. Ownership transfer, broader lifecycle, and production/data cutover remain separate scope decisions.
+Clerk identity and pod access are implemented. Frontend work starts from the reset shell and follows [the mobile-first UI plan](../../client/TASKS.md): foundation, profile onboarding, then pods. Backend candidates remain explicit existing-account/owner backfill or Scryfall. Ownership transfer, broader lifecycle, and production/data cutover remain separate scope decisions.
 
 ## In progress
 

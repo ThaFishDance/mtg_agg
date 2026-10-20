@@ -1,5 +1,12 @@
 # MTG Aggregator backend requirements
 
+> Frontend direction updated 2026-10-20: the user authorized removing the legacy
+> pages/routes and restarting UI development with a mobile-first approach. See
+> [frontend tasks](../../client/TASKS.md). References below to deferred frontend
+> work or the legacy client describe the earlier backend phase. Backend APIs,
+> stored data, and migrations are unchanged by the frontend reset.
+
+
 ## Status and evidence
 
 The user confirmed a FastAPI backend with users, pods, and games CRUD, based on `migrations/v001__create_initial_tables.sql`, using SQLAlchemy ORM and PostgreSQL. Clerk session verification and pod permissions are implemented. Pod history/statistics must be private by default and may be made public only with pod-owner approval. `/api/v1` and snake_case JSON are accepted; client updates happen later. Python 3.12 and uv are configured. CRUD and integration tests are implemented; deployment and legacy-data cutover remain deferred. The existing Next.js application is a reference, not the new backend.

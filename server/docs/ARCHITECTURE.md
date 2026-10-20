@@ -1,5 +1,12 @@
 # Backend architecture
 
+> Frontend direction updated 2026-10-20: the user authorized removing the legacy
+> pages/routes and restarting UI development with a mobile-first approach. See
+> [frontend tasks](../../client/TASKS.md). References below to deferred frontend
+> work or the legacy client describe the earlier backend phase. Backend APIs,
+> stored data, and migrations are unchanged by the frontend reset.
+
+
 ## Boundaries and current state
 
 Accepted direction: a separate FastAPI service under `server/`; frontend work is deferred. `app/main.py` provides `create_app()` and an independent `/api/health` route with a typed response. Python 3.12 and uv are configured; API tests run in process. The legacy system combines Next.js routes, Prisma, PostgreSQL, Clerk, and Scryfall in `client/`. Do not reuse Prisma as a Python persistence layer or remove the legacy system during initial implementation.
