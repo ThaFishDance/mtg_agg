@@ -8,16 +8,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        gold: '#c9a84c',
+        gold: 'var(--accent)',
+        muted: 'var(--text-muted)',
         'mana-w': '#f5f0dc',
         'mana-u': '#4a90d9',
         'mana-b': '#a29cad',
         'mana-r': '#e05c3a',
         'mana-g': '#3a9e5c',
         poison: '#7c3aed',
-        primary: '#0d1117',
-        secondary: '#161b22',
-        card: '#1c2230',
+        primary: 'var(--surface-page)',
+        secondary: 'var(--surface-raised)',
+        card: 'var(--surface-card)',
       },
       fontFamily: {
         cinzel: ['var(--font-cinzel)', 'Cinzel', 'serif'],

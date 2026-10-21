@@ -24,12 +24,19 @@ For every UI task:
   API handlers, unused feature components/helpers, and unfinished Pods work.
   Keep a minimal homepage, layout and Clerk auth shell. No backend or data reset.
 
-## Next
-
-- [ ] **UI-001 — Mobile-first UI foundation.** Establish spacing, typography,
+- [x] **UI-001 — Mobile-first UI foundation.** Establish spacing, typography,
   colors, responsive content widths, buttons, form fields and status patterns.
   Review the phone shell/navigation first, then tablet and desktop; meet all
   acceptance rules above. No feature pages in this task.
+  Verified 2026-10-20: four accessible-HTML tests; Chromium fixture checks at
+  320/375/768/1280px, 100%/200% CSS scaling, touch targets, focus, field entry,
+  variant colors and reduced motion. TypeScript and production build passed.
+  Live homepage/auth verification is blocked by missing Clerk keys; real-phone
+  and actual browser zoom checks remain release verification items below.
+
+
+## Next
+
 - [ ] **UI-002 — Sign-in and profile onboarding.** Build the phone-first sign-in
   return flow and explicit profile-confirmation form, prefilled from Clerk with
   missing fields editable. Integrate FastAPI through explicit authenticated

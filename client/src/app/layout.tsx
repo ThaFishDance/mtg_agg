@@ -31,9 +31,10 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className={`${cinzel.variable} ${inter.variable}`}>
-        <body className="bg-primary text-white min-h-screen">
+        <body className="min-h-dvh">
+          <a className="skip-link" href="#main-content">Skip to content</a>
           <NavBar />
-          <main>
+          <main id="main-content" tabIndex={-1}>
             {children}
           </main>
         </body>
