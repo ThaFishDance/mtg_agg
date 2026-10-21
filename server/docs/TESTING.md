@@ -18,6 +18,13 @@ Clerk/access verification on **2026-10-18**: **56 tests passed without warnings*
 
 ## Proposed test layers
 
+2026-10-20 local-profile verification: 58 tests passed, 38 PostgreSQL cases
+skipped without `TEST_DATABASE_URL`. The explicit SQLite auth upgrade is covered
+for backup contents, retained records, repeatability, uniqueness, owner/public
+constraints, foreign keys, and refusal to create a missing database. Existing
+signed-session tests exercise SQLite profile isolation and no email adoption.
+Production PostgreSQL verification was not rerun for this change.
+
 - Unit: pytest `test_*.py`, focused business rules for completion, colors, inventory bounds, and statistics. No real network or database.
 - API: in-process FastAPI application fixture; test health, OpenAPI, request validation, status/error schemas, and dependency overrides. A pytest-compatible HTTP test client is proposed; dependencies selected in TASK-001.
 - Integration: selected real database engine in disposable state; verify transactions, constraints, ownership queries, migrations, and concurrent/repeated completion behavior. Do not substitute SQLite for PostgreSQL-specific semantics if PostgreSQL is selected.

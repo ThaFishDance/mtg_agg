@@ -24,6 +24,17 @@ uv run --locked python -m app local
 
 This explicit argument ignores `DATABASE_URL`, creates `server/local.db` and missing tables, and preserves data across restarts. The file is gitignored. Optional `--host` and `--port` arguments configure the listener. `uv run --locked python -m app` uses the normal PostgreSQL configuration, as does the existing Uvicorn command. SQLite uses foreign-key enforcement and serialized write transactions; it is intended for local development. Local tables come from ORM metadata; the PostgreSQL SQL migration command remains PostgreSQL-only. Existing local schemas are not automatically upgraded when models change.
 
+For a local database created before Clerk support, stop the local server and run:
+
+```sh
+uv run --locked python -m app.migrate_local
+```
+
+This SQLite-only command takes a timestamped `local.db-backup-*` backup, adds
+missing Clerk/owner/visibility columns and constraints, and can be repeated.
+Existing users stay unlinked and pods stay private; it does not infer ownership
+or link accounts by email. PostgreSQL continues to use `app.migrate`.
+
 Health: `http://127.0.0.1:8000/api/v1/health` (also `/api/health`). OpenAPI: `/openapi.json`. Interactive docs: `/docs`. PostgreSQL is required for CRUD outside explicit local mode; health and OpenAPI remain independent. Environment variables are read from the process; `.env` files are not loaded automatically. See `.env.example` for configuration.
 
 Use a dedicated database with all checked-in migrations applied, including `v002__add_clerk_and_pod_access.sql`. Existing users/pods remain unclaimed and private until explicitly linked; no identity or owner is inferred. The explicit migration command records checksums, skips previously applied migrations, and rejects changes to applied scripts. It does not reset or adopt an existing legacy schema. No production database or legacy data was changed. The app never calls `create_all()` or runs migrations on startup.

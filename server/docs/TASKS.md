@@ -38,6 +38,11 @@ None.
 
 ## Blocked / conditional roadmap
 
+- [x] **Explicit local SQLite auth upgrade.** User authorized fixing the local
+  schema alongside profile onboarding. `app.migrate_local` creates a backup and
+  adds missing auth columns without deleting data or linking accounts. Verified
+  by two migration tests and the SQLite API suite; PostgreSQL contracts unchanged.
+
 The remaining roadmap tasks are conditional; implemented identity and pod permissions are documented in AUTH.md.
 
 - [ ] **TASK-005 — Game lifecycle and history.** Requirements: REQ-004. Dependencies: TASK-003; TASK-004 if games are private. Acceptance: create/detail/history/completion contract tests; exact participant membership, winner policy, atomic writes, pagination, and repeated/concurrent completion behavior verified.

@@ -1,6 +1,8 @@
 # Clerk authentication and pod access
 
-Implemented using Clerk session JWTs and the approved owner/admin/member roles. Frontend integration remains deferred.
+Implemented using Clerk session JWTs and the approved owner/admin/member roles.
+The frontend now uses explicit profile confirmation and authenticated Next.js
+`/api/profile` handlers; live tenant verification remains pending.
 
 ## Configuration and sign-in flow
 

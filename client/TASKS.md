@@ -42,6 +42,15 @@ For every UI task:
   missing fields editable. Integrate FastAPI through explicit authenticated
   Next.js handlers; preserve backend validation and account-conflict behavior.
   Test token forwarding, session expiry, retry, and no email-based account linking.
+  Implemented 2026-10-20: explicit confirmation form prefilled from Clerk,
+  authenticated same-origin `/api/profile` handlers, preserved form input after
+  save failures, and recovery from a previously committed request. Handler tests,
+  TypeScript and production build pass. Interactive Chromium fixture checks pass
+  at 320/375/768/1280px and 100%/200% CSS scaling, covering prefills, save,
+  validation, conflicts, network/load retry, signed-out and expired sessions.
+  Live Clerk tenant/two-account checks and
+  actual browser zoom/real-phone verification remain pending, so this task stays
+  open until those acceptance checks are complete.
 - [ ] **UI-003 — Pods.** After UI-002, add a mobile-first owned/joined pod list,
   bounded pagination and private owner-only creation using existing FastAPI
   contracts. Label pods by ID; automatic owner membership. Test empty, loading,
