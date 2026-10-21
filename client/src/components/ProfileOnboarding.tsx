@@ -75,7 +75,7 @@ export function ProfileOnboarding() {
   }
 
   if (!isLoaded) return <Status kind="loading" title="Loading your session…" />
-  if (!isSignedIn) return <Status title="Welcome to your Commander table" action={<SignInButton mode="modal"><Button>Sign in</Button></SignInButton>}>Sign in to set up your profile.</Status>
+  if (!isSignedIn) return <Status title="Welcome to your Commander table">Sign in using the button above to set up your profile.</Status>
   if (phase === 'loading') return <Status kind="loading" title="Loading your profile…" />
   if (phase === 'unauthorized') return <Status kind="error" title="Your session expired" action={<SignInButton mode="modal"><Button>Sign in again</Button></SignInButton>}>Sign in again to continue.</Status>
   if (phase === 'error') return <Status kind="error" title="Unable to load your profile" action={<Button onClick={() => setAttempt(value => value + 1)}>Retry</Button>}>{error}</Status>

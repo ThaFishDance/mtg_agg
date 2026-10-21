@@ -97,7 +97,8 @@ const path = require('node:path');
     await page.reload();
     await page.getByRole('button', { name: 'Sign in again' }).waitFor();
     await page.goto('http://127.0.0.1:8766/fixture?signedout');
-    await page.getByRole('button', { name: 'Sign in', exact: true }).waitFor();
+    await page.getByText('Sign in using the button above to set up your profile.', { exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Sign in', exact: true }).count(), 0);
     assert.equal(posts, 16);
     console.log('Profile load retry, session expiry and signed-out states passed');
   } finally {
